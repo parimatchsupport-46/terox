@@ -2,258 +2,103 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home · Chatter</title>
-  <meta name="description" content="Home page of a three-page app built on the simple-ui design system." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f5f7" id="themeColor" />
+  <meta name="description" content="Terox Chat — all your contacts in one list. Tap to open a chat." />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Terox Chat</title>
   <script>
-    /* theme before paint — same contract as the library (localStorage 'theme') */
     (function () {
       try {
         var t = localStorage.getItem("theme");
         if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", t);
-      } catch (e) {}
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
     })();
   </script>
   <link rel="stylesheet" href="assets/ui.css" />
-  <link rel="stylesheet" href="assets/pages.css" />
+  <link rel="stylesheet" href="assets/app.css" />
 </head>
 <body>
+  <div class="app">
 
-  <!-- ===== Navbar (simple-ui ▸ Nevbar) ===== -->
-  <header class="navbar">
-    <div class="nav-inner">
-      <a href="index.html" class="logo">
+    <header class="appbar">
+      <span class="brand">
         <span class="logo-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </span>
-        Chatter
-      </a>
-
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html" class="active" aria-current="page">Home</a></li>
-        <li><a href="chat.html">Chat <span class="nav-count" data-nav-count hidden>0</span></a></li>
-        <li><a href="profile.html">Profile</a></li>
-      </ul>
-
-      <div class="nav-actions">
-        <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        Terox Chat
+      </span>
+      <div class="appbar-actions">
+        <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         </button>
-        <a href="profile.html" class="nav-avatar avatar size-32 t-accent" data-nav-avatar aria-label="Open profile">RV</a>
-        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false">
-          <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <button class="icon-btn solid" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span class="pill" data-unread-pill hidden>0</span>
         </button>
       </div>
+    </header>
+
+    <div class="body">
+      <div class="listbar">
+        <div class="hint">
+          <h1>All users</h1>
+          <span><b data-online>0</b> online</span>
+        </div>
+        <div class="search">
+          <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="userSearch" placeholder="Search name or message" aria-label="Search users" autocomplete="off" enterkeyhint="search" />
+          <button class="s-clear" id="searchClear" aria-label="Clear search" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="ulist" id="userList" role="list"></div>
     </div>
-  </header>
+  </div>
 
-  <main>
-    <!-- ===== Hero (Cards and button) ===== -->
-    <section class="shell hero">
-      <div>
-        <span class="eyebrow"><span class="dot-status online"></span> simple-ui · design tokens loaded</span>
-        <h1>A small, calm interface for <span>conversations</span>.</h1>
-        <p class="lede">
-          Three pages — Home, Chat and Profile — built with only the components this app
-          actually needs from the simple-ui library. Same tokens, same 6px radius, same
-          soft shadow, nothing extra.
-        </p>
-        <div class="hero-actions">
-          <a class="btn" href="chat.html">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Open chat
-          </a>
-          <a class="btn ghost" href="profile.html">View profile</a>
-        </div>
-        <p class="hero-note" id="heroNote">Reading your local demo data…</p>
+  <!-- ===== menu drawer: button on the right, panel opens from the left ===== -->
+  <button class="scrim" id="scrim" hidden aria-hidden="true" tabindex="-1"></button>
+  <aside class="drawer" id="drawer" aria-label="Menu" aria-hidden="true">
+    <div class="drawer-head">
+      <a class="avatar s48 t-accent" href="profile.html" data-davatar>RV<span class="live"></span></a>
+      <div class="who">
+        <b data-dname>Terox Chat</b>
+        <span data-dhandle>@terox</span>
       </div>
-
-      <!-- mini thread preview, same bubble shape as the chat page -->
-      <div class="card preview-card" aria-hidden="true">
-        <div class="preview-head">
-          <span class="avatar size-32 t-yes">MI</span>
-          <div>
-            <div class="who">Meera Iyer</div>
-            <div class="sub"><span class="dot-status online"></span> Frontend Lead · online</div>
-          </div>
-          <span class="badge badge-secondary">Reply</span>
-        </div>
-        <div class="preview-body">
-          <div class="bubble in">Tokens extract ho gaye — accent <b>#4f6bed</b> ke saath dark mode bhi set hai.</div>
-          <div class="bubble out">Nice. Radius 6px pe sab cards consistent dikh rahe hain.</div>
-        </div>
-        <div class="preview-foot">
-          <span class="preview-input">Type a message…</span>
-          <span class="btn" style="padding:10px 16px">Send</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Stats ===== -->
-    <section class="shell">
-      <div class="stat-grid">
-        <div class="card stat">
-          <span class="num" data-stat="threads">0</span>
-          <span class="lbl">Active conversations</span>
-          <span class="foot"><span class="badge badge-success">live</span> from local store</span>
-        </div>
-        <div class="card stat">
-          <span class="num" data-stat="messages">0</span>
-          <span class="lbl">Messages this week</span>
-          <span class="foot">counted from seeded demo threads</span>
-        </div>
-        <div class="card stat">
-          <span class="num" data-stat="unread">0</span>
-          <span class="lbl">Unread replies</span>
-          <span class="foot"><span class="badge badge-primary" data-stat="unread-badge">0</span> waiting on you</span>
-        </div>
-        <div class="card stat">
-          <span class="num" data-stat="reused">0</span>
-          <span class="lbl">Library components reused</span>
-          <span class="foot">counted from the list below</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Feature cards ===== -->
-    <section class="shell section">
-      <div class="section-head">
-        <div>
-          <h2>Where the library shows up</h2>
-          <p>Each page pulls in only the pieces it needs.</p>
-        </div>
-        <a class="link-arrow" href="chat.html">Try the chat
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
-      </div>
-
-      <div class="feature-grid">
-        <article class="card feature">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.2a8.5 8.5 0 0 1-.9-3.8 8.38 8.38 0 0 1 8.4-9 8.5 8.5 0 0 1 8.6 8.5z"/></svg>
-          </span>
-          <h3>Chat page</h3>
-          <p>Search bar to filter threads, badges for unread counts, loader dots for the
-             typing state and tooltips on the composer actions.</p>
-          <a class="link-arrow" href="chat.html">Open chat
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </a>
-        </article>
-
-        <article class="card feature">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </span>
-          <h3>Profile page</h3>
-          <p>Card layout with inline editing, toggle switches for preferences and the
-             yes / no button colours for save and destructive actions.</p>
-          <a class="link-arrow" href="profile.html">Open profile
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </a>
-        </article>
-
-        <article class="card feature">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 1 0 0 19c1.4 0 2.2-.9 2.2-1.9 0-1.3-1.1-1.7-1.1-2.8 0-.8.7-1.4 1.6-1.4h1.9A4.9 4.9 0 0 0 21.5 11c0-4.7-4.3-8.5-9.5-8.5Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="11" cy="7" r="1.2"/><circle cx="15.5" cy="8.5" r="1.2"/></svg>
-          </span>
-          <h3>Shared tokens</h3>
-          <p>One stylesheet holds the light and dark palettes, the 64px navbar and the
-             960px content width — so all three pages stay in the same family.</p>
-          <a class="link-arrow" href="#tokens">See the palette
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
-          </a>
-        </article>
-      </div>
-    </section>
-
-    <!-- ===== Recent + design system ===== -->
-    <section class="shell two-col" id="tokens">
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2>Recent conversations</h2>
-            <p>Pulled from the same store the chat page writes to.</p>
-          </div>
-          <a class="btn ghost sm" href="chat.html">Open all</a>
-        </div>
-        <div class="rows" id="recentList"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2>Design tokens</h2>
-            <p>Copied from the library, not reinvented.</p>
-          </div>
-        </div>
-        <div class="swatches">
-          <span class="swatch"><i style="background:#4f6bed"></i> accent</span>
-          <span class="swatch"><i style="background:#22a06b"></i> yes</span>
-          <span class="swatch"><i style="background:#e5484d"></i> no</span>
-          <span class="swatch"><i style="background:#ffc107"></i> warning</span>
-          <span class="swatch"><i style="background:#f4f5f7"></i> bg</span>
-          <span class="swatch"><i style="background:#ffffff"></i> card</span>
-          <span class="swatch"><i style="background:#e5e7eb"></i> border</span>
-          <span class="swatch"><i style="background:#6b7280"></i> muted</span>
-        </div>
-        <ul class="used-list" id="usedList"></ul>
-      </div>
-    </section>
-  </main>
-
-  <!-- ===== Footer (simple-ui ▸ Footer) ===== -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-top">
-        <div class="brand">
-          <div class="logo">
-            <span class="logo-mark">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </span>
-            Chatter
-          </div>
-          <p class="about">A three-page demo that borrows the simple-ui design language instead of copying the whole library.</p>
-        </div>
-
-        <div class="col">
-          <h4>Pages</h4>
-          <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="chat.html">Chat</a></li>
-            <li><a href="profile.html">Profile</a></li>
-          </ul>
-        </div>
-
-        <div class="col">
-          <h4>Components</h4>
-          <ul>
-            <li><a href="profile.html">Cards &amp; buttons</a></li>
-            <li><a href="chat.html">Badges &amp; search</a></li>
-            <li><a href="profile.html">Toggles &amp; toasts</a></li>
-          </ul>
-        </div>
-
-        <div class="col">
-          <h4>Reference</h4>
-          <ul>
-            <li><a href="https://github.com/parimatchsupport-46/simple-ui" target="_blank" rel="noreferrer">simple-ui repo</a></li>
-            <li><a href="#tokens">Tokens</a></li>
-            <li><a href="#" data-action="reset-demo">Reset demo data</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <p class="copy">© <span id="year"></span> Chatter. Built on simple-ui.</p>
-        <p class="copy">Light &amp; dark themes, system-ui type, 6px radius.</p>
-      </div>
+      <button class="icon-btn" id="drawerClose" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
-  </footer>
+    <nav>
+      <a href="index.html" data-nav="home" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg>
+        Home
+      </a>
+      <a href="chat.html" data-nav="chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+        <span class="badge-count" data-unread-pill hidden>0</span>
+      </a>
+      <a href="profile.html" data-nav="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a>
+    </nav>
+    <div class="drawer-foot">
+      <div class="rowline">
+        <span class="tl">Dark theme</span>
+        <label class="switch">
+          <input type="checkbox" id="darkSwitch" />
+          <span class="sl"></span>
+        </label>
+      </div>
+      <p class="ver">Terox Chat · v1.0 · mobile only</p>
+    </div>
+  </aside>
 
   <script src="assets/store.js"></script>
   <script src="assets/ui.js"></script>

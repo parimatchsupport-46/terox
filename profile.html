@@ -2,336 +2,191 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profile · Chatter</title>
-  <meta name="description" content="Profile page — account details, preferences and appearance, built with simple-ui components." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f5f7" id="themeColor" />
+  <meta name="description" content="Terox Chat — your profile, status and chat preferences." />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Profile · Terox Chat</title>
   <script>
     (function () {
       try {
         var t = localStorage.getItem("theme");
         if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", t);
-      } catch (e) {}
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
     })();
   </script>
   <link rel="stylesheet" href="assets/ui.css" />
-  <link rel="stylesheet" href="assets/pages.css" />
+  <link rel="stylesheet" href="assets/app.css" />
 </head>
 <body>
+  <div class="app">
 
-  <header class="navbar">
-    <div class="nav-inner">
-      <a href="index.html" class="logo">
-        <span class="logo-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </span>
-        Chatter
-      </a>
-
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="chat.html">Chat <span class="nav-count" data-nav-count hidden>0</span></a></li>
-        <li><a href="profile.html" class="active" aria-current="page">Profile</a></li>
-      </ul>
-
-      <div class="nav-actions">
-        <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <header class="appbar">
+      <div class="titles"><b>Profile</b></div>
+      <div class="appbar-actions">
+        <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         </button>
-        <a href="profile.html" class="nav-avatar avatar size-32 t-accent" data-nav-avatar aria-label="Open profile">RV</a>
-        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false">
-          <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <button class="icon-btn solid" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span class="pill" data-unread-pill hidden>0</span>
         </button>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="shell profile-page stack" style="padding-top:24px">
+    <div class="body">
+      <div class="screen stack" style="--gap:14px">
 
-    <!-- ---------- identity card ---------- -->
-    <section class="card profile-head">
-      <div class="cover"></div>
-      <div class="head-body">
-        <span class="avatar size-88 t-accent" id="avatarBig">RV</span>
-
-        <div class="head-id">
+        <!-- identity -->
+        <section class="card phero">
+          <span class="avatar s72 t-accent" id="pAvatar">RV<span class="live"></span></span>
           <h1 id="pName">—</h1>
-          <div class="handle">@<span id="pHandle">—</span> · <span id="pRole">—</span></div>
-          <div class="head-badges">
-            <span class="badge badge-success">Verified</span>
-            <span class="badge badge-secondary" id="pVis">Team only</span>
-            <span class="badge badge-secondary" id="pLoc">—</span>
-            <span class="badge badge-outline" id="pJoined">—</span>
+          <p class="h">@<span id="pUser">—</span> · <span id="pPhone">—</span></p>
+          <p class="live"><span class="dot-status"></span> Online</p>
+          <div class="tints" id="tints" role="group" aria-label="Avatar colour">
+            <button type="button" data-tint="accent" aria-label="Blue" aria-pressed="false"></button>
+            <button type="button" data-tint="yes" aria-label="Green" aria-pressed="false"></button>
+            <button type="button" data-tint="no" aria-label="Red" aria-pressed="false"></button>
+            <button type="button" data-tint="warn" aria-label="Amber" aria-pressed="false"></button>
           </div>
+        </section>
 
-          <div class="prog" title="Fields filled in">
-            <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
-            <span id="progLabel">—</span>
-          </div>
-        </div>
-
-        <div class="head-actions">
-          <button class="btn ghost sm" id="editBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            Edit details
-          </button>
-          <a class="btn sm" href="chat.html">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Messages
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <div class="two-col">
-      <!-- ---------- left column ---------- -->
-      <div class="stack" style="--gap:24px">
-        <form class="card" id="profileForm" novalidate>
+        <!-- about: view / edit -->
+        <section class="card">
           <div class="card-head">
             <div>
-              <h2>Account details</h2>
-              <p>Edit inline — the nav avatar updates as you type.</p>
+              <h2>About</h2>
+              <p id="aboutHint">Shown to everyone in your chat list</p>
             </div>
-            <span class="badge badge-secondary" id="modeBadge">Read only</span>
+            <button class="btn ghost sm" type="button" id="editBtn">Edit</button>
           </div>
 
-          <div class="grid-2">
-            <div class="field" aria-readonly="true" data-field="name">
-              <label for="fName">Full name</label>
-              <input class="input" id="fName" name="name" disabled />
+          <form id="profileForm" autocomplete="off">
+            <div class="stack" style="--gap:12px">
+              <div class="field view" data-field="name">
+                <label for="fName">Name</label>
+                <input class="input" id="fName" disabled />
+              </div>
+              <div class="field view" data-field="username">
+                <label for="fUsername">Username</label>
+                <input class="input" id="fUsername" disabled autocapitalize="none" />
+              </div>
+              <div class="field view" data-field="phone">
+                <label for="fPhone">Phone</label>
+                <input class="input" id="fPhone" type="tel" disabled inputmode="tel" />
+              </div>
+              <div class="field view" data-field="bio">
+                <label for="fBio">Status</label>
+                <textarea class="textarea" id="fBio" rows="2" disabled maxlength="120"></textarea>
+              </div>
             </div>
-            <div class="field" aria-readonly="true" data-field="username">
-              <label for="fUsername">Username</label>
-              <input class="input" id="fUsername" name="username" disabled />
-            </div>
-          </div>
 
-          <div class="grid-2" style="margin-top:16px">
-            <div class="field" aria-readonly="true" data-field="email">
-              <label for="fEmail">Email</label>
-              <input class="input" id="fEmail" name="email" type="email" disabled />
+            <div class="pfoot" id="formActions" hidden>
+              <button class="btn ghost" type="button" id="cancelBtn">Cancel</button>
+              <button class="btn yes" type="submit">Save</button>
             </div>
-            <div class="field" aria-readonly="true" data-field="phone">
-              <label for="fPhone">Phone</label>
-              <input class="input" id="fPhone" name="phone" disabled />
-            </div>
-          </div>
+          </form>
+        </section>
 
-          <div class="grid-2" style="margin-top:16px">
-            <div class="field" aria-readonly="true" data-field="location">
-              <label for="fLocation">Location</label>
-              <input class="input" id="fLocation" name="location" disabled />
-            </div>
-            <div class="field" aria-readonly="true" data-field="visibility">
-              <label for="fVisibility">Profile visibility</label>
-              <select class="input" id="fVisibility" name="visibility" disabled>
-                <option>Public</option>
-                <option>Team only</option>
-                <option>Private</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field" aria-readonly="true" data-field="bio" style="margin-top:16px">
-            <label for="fBio">Bio</label>
-            <textarea class="textarea" id="fBio" name="bio" rows="3" disabled></textarea>
-          </div>
-
-          <div id="tintRow" style="margin-top:16px">
-            <span class="field"><label>Avatar tint</label></span>
-            <div style="display:flex;gap:8px;margin-top:8px" role="group" aria-label="Avatar tint">
-              <button type="button" class="sw" data-tint="accent" aria-label="Accent"></button>
-              <button type="button" class="sw" data-tint="yes" aria-label="Green"></button>
-              <button type="button" class="sw" data-tint="no" aria-label="Red"></button>
-              <button type="button" class="sw" data-tint="warn" aria-label="Amber"></button>
-            </div>
-          </div>
-
-          <div id="formActions" class="row-actions" hidden>
-            <button class="btn yes" type="submit">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-              Save changes
-            </button>
-            <button class="btn ghost" type="button" id="cancelBtn">Cancel</button>
-          </div>
-        </form>
-
-        <div class="card">
+        <!-- preferences -->
+        <section class="card">
           <div class="card-head">
-            <div>
-              <h2>Recent activity</h2>
-              <p>Same rows the home page uses.</p>
-            </div>
-            <span class="badge badge-secondary" id="composerStat">—</span>
-          </div>
-          <div class="rows" id="activityList"></div>
-        </div>
-      </div>
-
-      <!-- ---------- right column ---------- -->
-      <div class="stack">
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2>Preferences</h2>
-              <p>Saved to this browser.</p>
-            </div>
-            <span class="badge badge-secondary" id="prefsSaved">saved</span>
+            <div><h2>Chat settings</h2></div>
           </div>
 
-          <!-- simple-ui ▸ toggle switch -->
           <div class="toggle-item">
             <div>
-              <div class="t-label">Desktop notifications</div>
-              <div class="t-desc">Ping me when a reply lands</div>
+              <div class="tl">Notifications</div>
+              <div class="td">Alert me when a new message arrives</div>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" data-pref="notifications" />
-              <span class="toggle-slider"></span>
+              <span class="sl"></span>
             </label>
           </div>
 
           <div class="toggle-item">
             <div>
-              <div class="t-label">Message sounds</div>
-              <div class="t-desc">Short chime on new messages</div>
+              <div class="tl">Message sounds</div>
+              <div class="td">Short chime on send and receive</div>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" data-pref="sounds" />
-              <span class="toggle-slider"></span>
+              <span class="sl"></span>
             </label>
           </div>
 
           <div class="toggle-item">
             <div>
-              <div class="t-label">Read receipts</div>
-              <div class="t-desc">Show others when you've seen a message</div>
+              <div class="tl">Enter sends message</div>
+              <div class="td">Off = Enter adds a new line</div>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" data-pref="readReceipts" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="toggle-item">
-            <div>
-              <div class="t-label">Compact message spacing</div>
-              <div class="t-desc">Tighter bubbles in the chat thread</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" data-pref="compact" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="toggle-item">
-            <div>
-              <div class="t-label">Auto-archive old chats</div>
-              <div class="t-desc">Move threads older than 30 days</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" data-pref="autoArchive" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="toggle-item">
-            <div>
-              <div class="t-label">Enter sends message</div>
-              <div class="t-desc">Off means Enter adds a new line</div>
-            </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" data-pref="enterToSend" />
-              <span class="toggle-slider"></span>
+              <span class="sl"></span>
             </label>
           </div>
-        </div>
+        </section>
 
-        <div class="card">
+        <!-- data -->
+        <section class="card">
           <div class="card-head">
             <div>
-              <h2>Appearance</h2>
-              <p>Theme is shared across all three pages.</p>
+              <h2>Chats on this device</h2>
+              <p id="chatStat">—</p>
             </div>
           </div>
-          <div class="list">
-            <div class="list-item li-stack">
-              <span class="li-ico">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-              </span>
-              <div style="min-width:0">
-                <div class="li-t">Colour theme</div>
-                <div class="li-s">Shared by all three pages · accent <b>#4f6bed</b> · current <b id="themeNow">light</b></div>
-              </div>
-              <div class="theme-seg" id="themeSeg" role="group" aria-label="Colour theme">
-                <button type="button" data-theme-choice="light">Light</button>
-                <button type="button" data-theme-choice="dark">Dark</button>
-                <button type="button" data-theme-choice="system">System</button>
-              </div>
-            </div>
-            <div class="list-item">
-              <span class="li-ico">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
-              </span>
-              <div style="min-width:0">
-                <div class="li-t">Typeface</div>
-                <div class="li-s">system-ui · -apple-system · Segoe UI · Roboto</div>
-              </div>
-              <span class="badge badge-secondary">16px</span>
-            </div>
-            <div class="list-item">
-              <span class="li-ico">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="6"/><path d="M9 3v18"/></svg>
-              </span>
-              <div style="min-width:0">
-                <div class="li-t">Corner radius</div>
-                <div class="li-s">Cards, buttons, inputs and badges</div>
-              </div>
-              <span class="badge badge-secondary">6px</span>
-            </div>
+          <div class="pfoot">
+            <button class="btn ghost" type="button" id="resetProfile">Reset profile</button>
+            <button class="btn no" type="button" id="clearChats">Delete all chats</button>
           </div>
-        </div>
+        </section>
 
-        <div class="card danger">
-          <div class="card-head">
-            <div>
-              <h2>Account</h2>
-              <p>Demo only — nothing leaves your browser.</p>
-            </div>
-            <span class="badge badge-danger">Local</span>
-          </div>
-          <div class="list">
-            <div class="list-item">
-              <span class="li-ico">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </span>
-              <div style="min-width:0">
-                <div class="li-t">Two-factor authentication</div>
-                <div class="li-s">Recovery codes generated 12 days ago</div>
-              </div>
-              <span class="badge badge-success">On</span>
-            </div>
-            <div class="list-item">
-              <span class="li-ico">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-              </span>
-              <div style="min-width:0">
-                <div class="li-t">Last session</div>
-                <div class="li-s">Jaipur, IN · Chrome on macOS</div>
-              </div>
-              <span class="badge badge-secondary">2h ago</span>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
-            <button class="btn ghost sm" type="button" id="signOutBtn">Sign out</button>
-            <button class="btn no sm" type="button" id="deleteBtn">Reset my profile</button>
-          </div>
-        </div>
       </div>
     </div>
-  </main>
+  </div>
+
+  <!-- ===== menu drawer: button on the right, panel opens from the left ===== -->
+  <button class="scrim" id="scrim" hidden aria-hidden="true" tabindex="-1"></button>
+  <aside class="drawer" id="drawer" aria-label="Menu" aria-hidden="true">
+    <div class="drawer-head">
+      <a class="avatar s48 t-accent" href="profile.html" data-davatar>RV<span class="live"></span></a>
+      <div class="who">
+        <b data-dname>Terox Chat</b>
+        <span data-dhandle>@terox</span>
+      </div>
+      <button class="icon-btn" id="drawerClose" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <nav>
+      <a href="index.html" data-nav="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg>
+        Home
+      </a>
+      <a href="chat.html" data-nav="chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+        <span class="badge-count" data-unread-pill hidden>0</span>
+      </a>
+      <a href="profile.html" data-nav="profile" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a>
+    </nav>
+    <div class="drawer-foot">
+      <div class="rowline">
+        <span class="tl">Dark theme</span>
+        <label class="switch">
+          <input type="checkbox" id="darkSwitch" />
+          <span class="sl"></span>
+        </label>
+      </div>
+      <p class="ver">Terox Chat · v1.0 · mobile only</p>
+    </div>
+  </aside>
 
   <script src="assets/store.js"></script>
   <script src="assets/ui.js"></script>
