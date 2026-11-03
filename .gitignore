@@ -1,0 +1,12 @@
+# dependencies
+node_modules/
+
+# generated test artifacts (recreated by tests/visual.js)
+tests/shots/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
