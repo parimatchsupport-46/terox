@@ -45,14 +45,16 @@ library, and only the pieces this app needs are used:
 
 ```
 --bg #f4f5f7 · --card #ffffff · --text #1f2430 · --muted #6b7280 · --border #e5e7eb
---brand #3eb798 (the logo green) · --accent #0e8266 · --yes #0b7a5e · --no #e5484d
+--brand #1e90ff · --accent #0b64c4 · --yes #0b64c4 · --no #e5484d
 radius 6px · system-ui
-dark: #12141a / #1c1f28 / #eceef3 · --accent #3eb798 with dark ink (#07211b) on filled buttons
+dark: #12141a / #1c1f28 / #eceef3 · --accent #1e90ff with dark ink (#041426) on filled buttons
 ```
 
-One green theme only — light and dark both derive from `#3eb798`, the exact colour of the logo.
-Light mode deepens it to `#0e8266` so white label text clears 4.5:1; dark mode uses the logo green
-itself with dark ink on fills (6.7:1). Red stays reserved for destructive actions.
+One blue theme (`#1E90FF`) in both modes. `#1e90ff` with white text is only 3.2:1, so light mode
+deepens the accent to `#0b64c4` (white text 5.8:1) while dark mode fills with `#1e90ff` and a near-black
+ink `#041426` (5.7:1). Every surface that used the accent — own bubbles, send button, toggles, badges,
+avatar tints, focus rings, quote bar, jump flash, online label — derives from that same blue.
+Red stays reserved for destructive actions. The logo artwork is kept exactly as supplied.
 
 Used: app bar + theme toggle · cards · buttons (yes/no) · badges · search bar ·
 toggle switch · loader dots (typing) · toast.
