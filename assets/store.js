@@ -189,6 +189,10 @@
     emit();
     return next;
   }
+  function pushCloud(u) {
+    syncCloud();
+    if (cloudOn() && global.FB.putUser) global.FB.putUser(u).catch(function () {});
+  }
   function usedPhotos(list) {
     var seen = {};
     (list || users()).forEach(function (u) { if (u.photo) seen[u.photo] = 1; });
@@ -232,11 +236,15 @@
       username: (data.username ? String(data.username).trim() : "@" + id).replace(/^@/, ""),
       bio: String(data.bio || "").trim(),
       photo: data.photo === undefined ? freePhoto(list) : data.photo,
+      /* an image the admin uploaded lives here, not in the pool */
+      photoURL: data.photoURL || null,
+      photoPath: data.photoPath || null,
       tint: "accent",
       role: String(data.role || "").trim()
     };
     list.push(u);
     saveUsers(list);
+    pushCloud(u);
     return u;
   }
   function updateUser(id, patch) {
@@ -248,7 +256,9 @@
       return next;
     });
     saveUsers(list);
-    return list.filter(function (u) { return u.id === id; })[0] || null;
+    var mine = list.filter(function (u) { return u.id === id; })[0] || null;
+    if (mine) pushCloud(mine);
+    return mine;
   }
   function removeUser(id) {
     var gone = null;
@@ -258,7 +268,35 @@
       return false;
     });
     saveUsers(list);
+    syncCloud();
+    if (cloudOn()) {
+      global.FB.dropUser(id);
+      if (gone && gone.photoPath) global.FB.removePhoto(gone.photoPath);
+    }
     return gone;
+  }
+
+  /* ---------------- the cloud layer (optional) ----------------
+     firebase.js boots itself. When it reaches "ready" the roster comes from
+     Firestore and every write is mirrored there; until then (or if the config
+     is empty) this file is the only source and nothing else changes. */
+  var cloud = null;
+  function cloudOn() { return cloud === "ready"; }
+  function syncCloud() {
+    if (!global.FB || cloud === "on" || cloud === "ready") return;
+    cloud = "on";
+    global.FB.on(function (state, why, user) {
+      if (state !== "ready") { cloud = state === "connecting" ? "on" : "off"; return; }
+      cloud = "ready";
+      global.FB.loadRoster().then(function (rows) {
+        if (rows && rows.length) { USERS = rows; write(KEY.users, rows); emit(); }
+        global.FB.watchRoster(function (live) {
+          USERS = live; write(KEY.users, live); emit();
+        });
+      }).catch(function () {
+        /* the rules can refuse a read before anyone signs in: the local list stands */
+      });
+    });
   }
 
   /* ---------------- threads ---------------- */
@@ -430,7 +468,10 @@
     global.dispatchEvent(new Event("terox:change"));
   }
 
+  syncCloud();
+
   global.Store = {
+    cloudState: function () { return cloud === "ready" ? "ready" : (global.FB ? global.FB.state() : "off"); },
     get USERS() { return users(); },
     chats: chats, thread: thread, order: order, last: last, lastAt: lastAt,
     unreadTotal: unreadTotal, markRead: markRead,

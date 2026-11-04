@@ -30,6 +30,45 @@
   <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
+  <div class="adm-modal" id="fbModal" hidden role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+    <div class="adm-modal-box card">
+      <div class="adm-form-head">
+        <h2 id="fbTitle">Firebase connection</h2>
+        <button class="icon-btn" id="fbClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <p class="hint" id="fbStateLine">not connected — the roster lives in this browser</p>
+      <div class="field">
+        <label for="fbSnippet">Paste the web config from the Firebase console</label>
+        <textarea class="textarea" id="fbSnippet" rows="7" spellcheck="false" placeholder='const firebaseConfig = {&#10;  apiKey: "AIza…",&#10;  authDomain: "you.firebaseapp.com",&#10;  projectId: "you",&#10;  storageBucket: "you.appspot.com"&#10;};'></textarea>
+        <p class="err" id="fbErr" hidden></p>
+      </div>
+      <div class="adm-photo-btns">
+        <button class="btn yes sm" type="button" id="fbSave">Connect in this browser</button>
+        <button class="btn ghost sm" type="button" id="fbFile">Download assets/firebase-config.js</button>
+        <button class="btn ghost sm" type="button" id="fbOff">Disconnect</button>
+      </div>
+      <p class="hint">Collection <code>teroxUsers</code>, images under <code>avatars/</code> in Storage. The panel writes, so lock both behind the admin account with the rules in the README.</p>
+    </div>
+  </div>
+
+  <div class="adm-modal" id="authModal" hidden role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="adm-modal-box card">
+      <div class="adm-form-head">
+        <h2 id="authTitle">Admin sign in</h2>
+        <button class="icon-btn" id="authClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="stack" style="--gap:12px">
+        <div class="field"><label for="authEmail">Email</label><input class="input" id="authEmail" type="email" autocomplete="username" /></div>
+        <div class="field"><label for="authPass">Password</label><input class="input" id="authPass" type="password" autocomplete="current-password" /></div>
+        <p class="err" id="authErr" hidden></p>
+      </div>
+      <div class="adm-form-foot">
+        <button class="btn yes" type="button" id="authGo">Sign in</button>
+      </div>
+      <p class="hint">Enable Email/Password in Firebase Authentication and create this admin user there.</p>
+    </div>
+  </div>
+
   <div class="adm-guard" id="cssGuard" role="alert">
     <b>The panel's stylesheet and scripts did not load.</b>
     <span id="guardWhy"></span>
@@ -52,6 +91,12 @@
         <span class="meter"><i id="mUsed">0</i> / <i id="mPool">0</i> images used</span>
       </div>
 
+      <div class="adm-cloud">
+        <button class="chip" id="fbChip" type="button" aria-label="Firebase connection settings">
+          <span class="dot"></span><span id="fbChipText">this device only</span>
+        </button>
+        <button class="btn ghost sm" id="fbAuthBtn" type="button" hidden>Sign in</button>
+      </div>
       <div class="appbar-actions">
         <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -65,9 +110,9 @@
     </header>
 
     <p class="adm-note">
-      Users created here are the users on the chat home page. Photos are not pasted as links —
-      each new user is auto-assigned a still-unused image from <code>assets/avatars/</code>,
-      and one image is never given to two users.
+      Users created here are the users on the chat home page. The profile image is a <b>file you
+      upload</b> — never a pasted link — and if you skip it the user takes a still-unused image from
+      <code>assets/avatars/</code>, so no two users ever share one.
     </p>
 
     <main class="adm-grid">
@@ -129,21 +174,27 @@
             </div>
 
             <div class="field">
-              <span class="lbl">Profile photo <span class="opt">auto-assigned</span></span>
-              <div class="adm-photo">
-                <span id="pPreview"></span>
-                <div>
-                  <b id="pName">—</b>
-                  <p id="pNote">next free image from the pool</p>
-                  <div class="adm-photo-btns">
-                    <button class="btn ghost sm" type="button" id="pNext">Next free image</button>
-                    <button class="btn ghost sm" type="button" id="pNone">No photo</button>
-                  </div>
-                </div>
+              <span class="lbl">Profile photo <span class="opt">you upload the file</span></span>
+              <label class="drop" id="pDrop">
+                <input type="file" id="pFile" accept="image/jpeg,image/png,image/webp" hidden />
+                <span class="drop-inner">
+                  <span id="pPreview" class="drop-av"></span>
+                  <span class="drop-text">
+                    <b id="pName">no image yet</b>
+                    <p id="pNote">click to choose a JPG, PNG or WebP — it is cropped to a 360px square and stored as this user's own file</p>
+                  </span>
+                </span>
+              </label>
+              <p class="err" id="pErr" hidden></p>
+              <div class="adm-photo-btns">
+                <button class="btn ghost sm" type="button" id="pPool">Take the next free pool image</button>
+                <button class="btn ghost sm" type="button" id="pClear">Remove photo</button>
+                <span class="hint" id="pPoolNote"></span>
               </div>
             </div>
           </div>
 
+          <p class="hint adm-lock" id="fbLock" hidden>Connected to Firebase — sign in as the admin account before saving, or the write will be refused by the security rules.</p>
           <div class="adm-form-foot">
             <button class="btn ghost" type="button" id="cancelBtn">Cancel</button>
             <button class="btn yes" type="submit" id="saveBtn">Create user</button>
@@ -174,6 +225,7 @@
       document.getElementById("cssGuard").className = "adm-guard show";
     }, 900);
   </script>
+  <script src="../assets/firebase.js"></script>
   <script src="../assets/store.js"></script>
   <script src="../assets/ui.js"></script>
   <script src="admin.js"></script>

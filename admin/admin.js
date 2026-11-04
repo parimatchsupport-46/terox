@@ -8,7 +8,9 @@
   "use strict";
 
   var editingId = null;      /* null = creating */
-  var photoPick = undefined; /* undefined = auto, null = no photo, "aNN.jpg" = chosen */
+  /* photoPick: undefined = keep/auto, null = none, {kind:"pool",file}, {kind:"file",url,path,bytes} */
+  var photoPick = undefined;
+  var uploading = false;
   var userTouched = false;
   var filter = "";
 
@@ -17,7 +19,9 @@
     name: q("fName"), user: q("fUser"), bio: q("fBio"),
     eName: q("eName"), eUser: q("eUser"), hUser: q("hUser"), hBio: q("hBio"),
     title: q("formTitle"), save: q("saveBtn"),
-    pName: q("pName"), pNote: q("pNote"), pPrev: q("pPreview")
+    pName: q("pName"), pNote: q("pNote"), pPrev: q("pPreview"),
+    pFile: q("pFile"), pDrop: q("pDrop"), ePhoto: q("pErr"), pPoolNote: q("pPoolNote"),
+    chip: q("fbChip"), chipText: q("fbChipText"), authBtn: q("fbAuthBtn"), lock: q("fbLock")
   };
 
   /* ---------------- the pool ---------------- */
@@ -34,11 +38,20 @@
     }
     return null;
   }
-  function chosenPhoto() {
-    if (photoPick === null) return null;
-    if (photoPick) return photoPick;
-    var free = nextFree(editingId);
-    return free ? free.name : null;
+  function pickedFor(u) {
+    if (u.photoURL) return { kind: "file", url: u.photoURL, path: u.photoPath || null, bytes: 0, stored: true };
+    if (u.photo) return { kind: "pool", file: u.photo };
+    return null;
+  }
+  function photoData() {
+    var p = photoPick === undefined ? (function () {
+      if (editingId) { var cur = Store.user(editingId); var had = cur ? pickedFor(cur) : null; if (had) return had; }
+      var free = nextFree(editingId);
+      return free ? { kind: "pool", file: free.name } : null;
+    })() : photoPick;
+    if (!p) return { photo: null, photoURL: null, photoPath: null };
+    if (p.kind === "pool") return { photo: p.file, photoURL: null, photoPath: null };
+    return { photo: null, photoURL: p.url, photoPath: p.path || null };
   }
 
   /* ---------------- render ---------------- */
@@ -51,21 +64,39 @@
     q("mUsed").parentNode.classList.toggle("full", Store.AVATARS.length - used === 0);
   }
 
+  function currentPick() {
+    if (photoPick !== undefined) return photoPick;
+    if (editingId) { var cur = Store.user(editingId); if (cur) return pickedFor(cur); return null; }
+    var free = nextFree(editingId);
+    return free ? { kind: "pool", file: free.name } : null;
+  }
+
   function renderPhoto() {
-    var name = chosenPhoto();
-    var preview = { name: f.name.value.trim() || "New User", photo: name, tint: "accent" };
-    f.pPrev.innerHTML = UI.avatarHTML(preview, 56, false);
-    if (!name) {
-      f.pName.textContent = "no photo";
-      f.pNote.textContent = nextFree(editingId)
-        ? "initials only — pick an image to override"
-        : "the pool is empty, so this user keeps initials";
+    var p = currentPick();
+    var name = f.name.value.trim() || "New User";
+    var preview = p && p.kind === "pool" ? { name: name, photo: p.file, tint: "accent" } : { name: name, photoURL: p && p.kind === "file" ? p.url : null, tint: "accent" };
+    f.pPrev.innerHTML = p && p.kind === "file"
+      ? '<img src="' + p.url + '" alt="">'
+      : UI.avatarHTML(preview, 60, false);
+    var freeLeft = Store.AVATARS.length - Object.keys(Store.usedPhotos(roster())).length;
+    f.pPoolNote.textContent = p && p.kind === "file" ? "" : freeLeft + " of " + Store.AVATARS.length + " pool images still free";
+
+    if (uploading) { f.pName.textContent = "reading the file…"; f.pNote.textContent = "cropping to a 360px square"; return; }
+    if (!p) {
+      f.pName.textContent = "no image yet";
+      f.pNote.textContent = "click the box to choose a JPG, PNG or WebP — or take one from the pool";
       return;
     }
-    var idx = Store.AVATARS.indexOf(name) + 1;
-    f.pName.textContent = name;
-    f.pNote.textContent = "image " + idx + " of " + Store.AVATARS.length +
-      " · free for this user, nobody else has it";
+    if (p.kind === "pool") {
+      var idx = Store.AVATARS.indexOf(p.file) + 1;
+      f.pName.textContent = p.file + " (from the pool)";
+      f.pNote.textContent = "image " + idx + " of " + Store.AVATARS.length + " · nobody else has it" +
+        (editingId ? "" : ", and it is this user's alone");
+      return;
+    }
+    f.pName.textContent = p.stored ? "stored image" : "your upload";
+    f.pNote.textContent = (p.bytes ? Math.round(p.bytes / 1024) + " KB after cropping · " : "") +
+      (p.path ? "Firebase Storage at " + p.path : "kept in this browser only — connect Firebase to store it");
   }
 
   function renderForm() {
@@ -146,10 +177,12 @@
     editingId = null;
     photoPick = undefined;
     userTouched = false;
+    f.pFile.value = "";
     f.name.value = "";
     f.user.value = "";
     f.bio.value = "";
     clearErrors();
+    f.ePhoto.hidden = true;
     f.hUser.textContent = "letters, numbers and _ only — must be unique";
     renderForm();
     showSheet();
@@ -160,7 +193,7 @@
     var u = Store.user(id);
     if (!u) return;
     editingId = id;
-    photoPick = u.photo || null;
+    photoPick = undefined;      /* keep whatever that user already has */
     userTouched = true;
     f.name.value = u.name;
     f.user.value = u.username || "";
@@ -222,10 +255,11 @@
     if (e) e.preventDefault();
     var data = validate();
     if (!data) { UI.toast("Fix the highlighted fields", "bad"); return; }
-    data.photo = chosenPhoto();
+    if (uploading) { UI.toast("Still reading that image, one moment", "bad"); return; }
+    var ph = photoData();
+    data.photo = ph.photo; data.photoURL = ph.photoURL; data.photoPath = ph.photoPath;
 
     if (editingId) {
-      var before = Store.user(editingId);
       var snapshot = roster().map(function (u) { return u; });
       Store.updateUser(editingId, data);
       render();
@@ -258,6 +292,88 @@
         Store.saveUsers(list);
         render();
       }
+    });
+  }
+
+  function takeFile(file) {
+    if (!window.FB || !FB.uploadPhoto) { f.ePhoto.textContent = "the upload layer is not loaded"; f.ePhoto.hidden = false; return; }
+    uploading = true;
+    f.ePhoto.hidden = true;
+    renderPhoto();
+    var handle = f.user.value.trim() || Store.slug(f.name.value);
+    FB.uploadPhoto(file, handle || "user").then(function (r) {
+      uploading = false;
+      photoPick = { kind: "file", url: r.url, path: r.path || null, bytes: r.bytes, stored: r.where === "storage" };
+      renderPhoto();
+      UI.toast(r.where === "storage" ? "image stored in Firebase Storage" : "image kept in this browser — connect Firebase to store it", "ok");
+    }).catch(function (e) {
+      uploading = false;
+      f.pFile.value = "";
+      f.ePhoto.textContent = e.message || "that file could not be used";
+      f.ePhoto.hidden = false;
+      renderPhoto();
+    });
+  }
+
+  /* ---------------- cloud status ---------------- */
+  function renderCloud() {
+    if (!window.FB) return;
+    var st = FB.state(), live = st === "ready", in_ = live && FB.signedIn();
+    f.chip.setAttribute("data-state", st);
+    f.chipText.textContent = st === "ready"
+      ? (in_ ? "Firestore · signed in" : "Firestore · sign in to write")
+      : st === "connecting" ? "connecting…"
+      : st === "error" ? "device only (Firebase unreachable)"
+      : "this device only";
+    f.authBtn.hidden = !live || in_;
+    f.authBtn.textContent = "Sign in";
+    f.lock.hidden = !(live && !in_);
+    q("fbStateLine").textContent = st === "ready"
+      ? "connected to " + (FB.config() || {}).projectId + (in_ ? " — signed in as " + FB.signedIn().email : " — read access only")
+      : st === "error" ? "error: " + FB.reason()
+      : "not connected — the roster lives in this browser";
+  }
+
+  function wireCloud() {
+    if (!window.FB) return;
+    FB.on(renderCloud);
+    f.chip.addEventListener("click", function () {
+      q("fbModal").hidden = false;
+      if (FB.config()) q("fbSnippet").value = "const firebaseConfig = " + JSON.stringify(FB.config(), null, 2) + ";";
+      q("fbSnippet").focus();
+    });
+    q("fbClose").addEventListener("click", function () { q("fbModal").hidden = true; });
+    q("fbModal").addEventListener("click", function (e) { if (e.target === q("fbModal")) q("fbModal").hidden = true; });
+    q("fbSave").addEventListener("click", function () {
+      var parsed = FB.parseSnippet(q("fbSnippet").value);
+      if (parsed.error) { q("fbErr").textContent = "could not read a config: " + parsed.error; q("fbErr").hidden = false; return; }
+      q("fbErr").hidden = true;
+      FB.setConfig(parsed.config);
+      FB.connect(true).then(function () { renderCloud(); UI.toast("connecting to " + parsed.config.projectId, "ok"); });
+    });
+    q("fbFile").addEventListener("click", function () {
+      var parsed = FB.parseSnippet(q("fbSnippet").value);
+      if (parsed.error) { q("fbErr").textContent = parsed.error; q("fbErr").hidden = false; return; }
+      var a = document.createElement("a");
+      a.href = "data:text/javascript;charset=utf-8," + encodeURIComponent(FB.configFile(parsed.config));
+      a.download = "firebase-config.js";
+      document.body.appendChild(a); a.click(); a.remove();
+      UI.toast("drop it at assets/firebase-config.js and commit", "ok");
+    });
+    q("fbOff").addEventListener("click", function () { FB.clearConfig(); q("fbModal").hidden = true; renderCloud(); UI.toast("back to this device only", "ok"); });
+    f.authBtn.addEventListener("click", function () { q("authModal").hidden = false; q("authEmail").focus(); });
+    q("authClose").addEventListener("click", function () { q("authModal").hidden = true; });
+    q("authModal").addEventListener("click", function (e) { if (e.target === q("authModal")) q("authModal").hidden = true; });
+    q("authGo").addEventListener("click", function () {
+      q("authErr").hidden = true;
+      FB.signIn(q("authEmail").value, q("authPass").value).then(function () {
+        q("authModal").hidden = true; q("authPass").value = "";
+        renderCloud();
+        UI.toast("signed in — the roster is now shared through Firestore", "ok");
+      }).catch(function (e) { q("authErr").textContent = e.message || "sign-in failed"; q("authErr").hidden = false; renderCloud(); });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { q("fbModal").hidden = true; q("authModal").hidden = true; }
     });
   }
 
@@ -305,27 +421,39 @@
   /* ---------------- boot ---------------- */
   function init() {
     render();
+    wireCloud();
     renderForm();          /* the photo preview is useful before anyone is being edited */
     q("newBtn").addEventListener("click", openNew);
     q("cancelBtn").addEventListener("click", closeForm);
     q("formClose").addEventListener("click", closeForm);
     q("formScrim").addEventListener("click", closeForm);
     q("uForm").addEventListener("submit", submit);
-    q("pNext").addEventListener("click", function () {
-      var free = nextFree(editingId);
-      if (!free) { UI.toast("Every image in the pool is already used", "bad"); return; }
-      photoPick = editingId && !chosenPhoto()
-        ? free.name
-        : (function () {
-            var i = Store.AVATARS.indexOf(chosenPhoto());
-            for (var k = i + 1; k < Store.AVATARS.length; k++) {
-              if (!taken(editingId)[Store.AVATARS[k]]) return Store.AVATARS[k];
-            }
-            return free.name;
-          })();
-      renderForm();
+    q("pPool").addEventListener("click", function () {
+      var cur = currentPick();
+      var from = cur && cur.kind === "pool" ? Store.AVATARS.indexOf(cur.file) : -1;
+      var used = taken(editingId);
+      var pick = null;
+      for (var k = from + 1; k < Store.AVATARS.length; k++) {
+        if (!used[Store.AVATARS[k]] || (cur && cur.kind === "pool" && Store.AVATARS[k] === cur.file)) { pick = Store.AVATARS[k]; break; }
+      }
+      if (!pick) { UI.toast("Every image in the pool is already used", "bad"); return; }
+      photoPick = { kind: "pool", file: pick };
+      renderPhoto();
     });
-    q("pNone").addEventListener("click", function () { photoPick = null; renderForm(); });
+    q("pClear").addEventListener("click", function () { photoPick = null; f.pFile.value = ""; renderPhoto(); });
+
+    /* the upload itself: click or drag a file onto the box */
+    f.pFile.addEventListener("change", function (e) { if (e.target.files && e.target.files[0]) takeFile(e.target.files[0]); });
+    ["dragenter", "dragover"].forEach(function (ev) {
+      f.pDrop.addEventListener(ev, function (e) { e.preventDefault(); f.pDrop.classList.add("hot"); });
+    });
+    ["dragleave", "drop"].forEach(function (ev) {
+      f.pDrop.addEventListener(ev, function (e) { e.preventDefault(); f.pDrop.classList.remove("hot"); });
+    });
+    f.pDrop.addEventListener("drop", function (e) {
+      var files = e.dataTransfer && e.dataTransfer.files;
+      if (files && files[0]) takeFile(files[0]);
+    });
     q("exportBtn").addEventListener("click", exportJSON);
     q("importBtn").addEventListener("click", function () { q("importFile").click(); });
     q("importFile").addEventListener("change", function (e) {

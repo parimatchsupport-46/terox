@@ -187,7 +187,7 @@
   }
   function avatarHTML(u, size, withLive) {
     u = u || {};
-    var src = u.photo ? ASSET + "avatars/" + u.photo : null;
+    var src = u.photoURL ? u.photoURL : (u.photo ? ASSET + "avatars/" + u.photo : null);
     var img = src
       ? '<img class="av-img" src="' + esc(src) + '" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'no-photo\');this.remove()">'
       : "";

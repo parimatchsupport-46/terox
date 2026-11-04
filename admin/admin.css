@@ -146,8 +146,11 @@
 .adm-form-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .adm-form-head h2 { font-size: 17px; letter-spacing: -0.02em; }
 .adm-form .field { display: grid; gap: 6px; }
-.adm-form label,
-.adm-form .lbl { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.adm-form label[for],
+.adm-form .lbl,
+.adm-modal label[for] { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+/* .drop is a <label> too — it must not inherit the shouty caption styling */
+.drop { font-size: 13px; font-weight: 400; color: var(--text); text-transform: none; letter-spacing: 0; }
 .req, .opt {
   font-size: 10px;
   font-weight: 700;
@@ -168,14 +171,52 @@
 .adm-form-foot { display: flex; gap: 10px; }
 .adm-form-foot .btn { flex: 1; }
 
-/* photo preview strip */
-.adm-photo { display: flex; align-items: center; gap: 12px; }
-.adm-photo > div { min-width: 0; }
-.adm-photo b { font-size: 14px; color: var(--text); }
-.adm-photo p { margin: 2px 0 6px; font-size: 12px; color: var(--muted); }
-.adm-photo-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-.adm-photo .avatar { width: 56px; height: 56px; font-size: 18px; border-radius: 12px; }
-.adm-photo .avatar .live { display: none; }
+/* the upload target: a drop zone that doubles as the live preview */
+.drop {
+  display: block;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.drop:active,
+.drop.hot { border-color: var(--accent); background: rgba(30, 144, 255, 0.07); }
+[data-theme="dark"] .drop.hot { background: rgba(30, 144, 255, 0.16); }
+.drop-inner { display: flex; align-items: center; gap: 12px; }
+.drop-av { flex: none; display: block; }
+.drop-av .avatar { width: 60px; height: 60px; font-size: 19px; border-radius: 12px; }
+.drop-av .avatar .live { display: none; }
+.drop-av img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; display: block; }
+.drop-text { min-width: 0; }
+.drop-text b { display: block; font-size: 14px; color: var(--text); overflow-wrap: anywhere; }
+.drop-text p { margin: 3px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); font-weight: 400; }
+.adm-photo-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+/* cloud status chip + sign in */
+.adm-cloud { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 44px; padding: 8px 12px;
+  border-radius: 999px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--muted);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.chip .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--muted); flex: none; }
+.chip[data-state="ready"] { color: var(--accent); border-color: var(--accent); }
+.chip[data-state="ready"] .dot { background: var(--yes); }
+.chip[data-state="error"] { color: var(--no); border-color: var(--no); }
+.chip[data-state="error"] .dot { background: var(--no); }
+.chip[data-state="connecting"] .dot { background: var(--warning); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+
+/* dialogs */
+.adm-modal { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8, 10, 14, 0.5); }
+.adm-modal[hidden] { display: none; }
+.adm-modal-box { width: 100%; max-width: 520px; max-height: 86vh; overflow: auto; display: grid; gap: 12px; padding: 16px; }
+.adm-modal-box .textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.adm-lock { color: var(--no); font-weight: 600; white-space: normal; }
 
 /* ---------- mobile: the form is a bottom sheet ---------- */
 @media (max-width: 939px) {
