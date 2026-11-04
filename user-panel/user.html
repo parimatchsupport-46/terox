@@ -44,39 +44,28 @@
         <section class="card phero">
           <span id="uAvatar"></span>
           <h1 id="uName">—</h1>
-          <p class="h">@<span id="uUser">—</span></p>
-          <p class="live"><span class="dot-status"></span> Online</p>
+          <div class="pid">
+            <div><span>Username</span><b id="uUser">—</b></div>
+            <div><span>Role</span><b id="uRole">—</b></div>
+            <div><span>Presence</span><b class="on"><span class="dot-status online"></span>Online</b></div>
+          </div>
         </section>
 
         <section class="card">
-          <div class="card-head"><div><h2>Details</h2><p>What the admin panel keeps for this user</p></div></div>
-          <table class="dt">
-            <tbody>
-                <tr><th scope="row">Name</th><td id="uFull">—</td></tr>
-                <tr><th scope="row">Username</th><td id="uHandle">—</td></tr>
-                <tr><th scope="row">Role</th><td id="uRole">—</td></tr>
-                <tr><th scope="row">Status</th><td id="uBio">—</td></tr>
-                <tr><th scope="row">Presence</th><td id="uPresence" class="on"><span class="dot-status online"></span>Online</td></tr>
-                <tr><th scope="row">Profile photo</th><td id="uPhoto">—</td></tr>
-            </tbody>
-          </table>
+          <div class="card-head"><div><h2>About</h2><p>Shared by this user</p></div></div>
+          <p class="bio" id="uBio">—</p>
+          <dl class="kv">
+            <div><dt>Username</dt><dd id="uHandle">@—</dd></div>
+            <div><dt>Photo</dt><dd id="uPhoto">—</dd></div>
+            <div><dt>Chat activity</dt><dd id="uStat">—</dd></div>
+          </dl>
         </section>
-
-        <section class="card">
-          <div class="card-head"><div><h2>Chat on this device</h2><p>Only in this browser</p></div></div>
-          <table class="dt">
-            <tbody>
-                <tr><th scope="row">Messages</th><td id="uMsgs" class="mono">0</td></tr>
-                <tr><th scope="row">Unread</th><td id="uUnread" class="mono">0</td></tr>
-                <tr><th scope="row">Last message</th><td id="uLast">—</td></tr>
-            </tbody>
-          </table>
-        </section>
-
 
         <div class="pfoot">
           <a class="btn yes" id="uChat" href="chat.html">Message</a>
           <a class="btn ghost" href="index.html">Back to users</a>
+        </div>
+
         </div>
 
       </div>

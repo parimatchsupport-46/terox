@@ -12,15 +12,11 @@
     q("uAvatar").innerHTML = UI.avatarHTML({ name: "?", tint: "accent" }, 96, false);
     q("uName").textContent = "User not found";
     q("uUser").textContent = "—";
+    q("uRole").textContent = "—";
     q("uBio").textContent = "Is id ka koi user roster me nahi hai. Admin panel se user banaiye ya list se choose kijiye.";
     q("uHandle").textContent = "@—";
-    q("uPhoto").innerHTML = "—";
-    q("uRole").textContent = "—";
-    q("uPresence").textContent = "—";
-    q("uPresence").className = "";
-    q("uMsgs").textContent = "0";
-    q("uUnread").textContent = "0";
-    q("uLast").innerHTML = "no thread to show<span class=" + '"sub"' + ">this id is not in the roster</span>";
+    q("uPhoto").textContent = "—";
+    q("uStat").textContent = "—";
     var chat = q("uChat");
     chat.classList.add("ghost");
     chat.classList.remove("yes");
@@ -33,39 +29,22 @@
     var p = UI.avatarHTML(u, 96, true);
     q("uAvatar").innerHTML = p;
     q("uName").textContent = u.name;
-    q("uUser").textContent = u.username || Store.slug(u.name);
-
-    var handle = "@" + (u.username || Store.slug(u.name));
-    q("uFull").textContent = u.name;
-    q("uHandle").textContent = handle;
+    q("uUser").textContent = (u.username || Store.slug(u.name)) ? "@" + (u.username || Store.slug(u.name)) : "\u2014";
     q("uRole").textContent = u.role || "no role set";
-    q("uBio").textContent = u.bio || "nothing written yet";
+    q("uHandle").textContent = "@" + (u.username || Store.slug(u.name));
+    q("uBio").textContent = u.bio || "No bio yet — the admin has not filled this in.";
+    q("uPhoto").textContent = u.photo ? u.photo + " · from the avatar pool" : "no image, initials only";
 
-    /* the photo row shows the picture itself, so the table reads like a profile card */
-    q("uPhoto").innerHTML = u.photo
-      ? '<img class="thumb" src="' + Store.photoSrc(u) + '" alt="" width="34" height="34" />' + u.photo +
-        '<span class="sub">one image, this user only</span>'
-      : 'initials only<span class="sub">no image assigned</span>';
-
-    var th = Store.thread(u.id);
-    var ms = th.messages || [];
-    var last = ms.length ? ms[ms.length - 1] : null;
-    q("uMsgs").textContent = ms.length;
-    q("uUnread").textContent = th.unread ? th.unread : "0 \u00b7 all read";
-    q("uLast").innerHTML = last
-      ? Store.time(last.at) + " \u00b7 " + Store.dayStamp(last.at) +
-        '<span class="sub">' + esc(last.text) + "</span>"
+    var t = Store.thread(u.id);
+    var last = t.messages.length ? t.messages[t.messages.length - 1] : null;
+    q("uStat").textContent = t.messages.length
+      ? t.messages.length + (t.messages.length === 1 ? " message" : " messages") +
+        " · last at " + Store.time(last.at) + ", " + Store.dayStamp(last.at)
       : "no messages yet";
 
     q("uChat").href = "chat.html?u=" + encodeURIComponent(u.id);
-    document.title = u.name + " \u00b7 Terox Chat";
+    document.title = u.name + " · Terox Chat";
     q("barName").textContent = u.name.split(" ")[0] + "'s profile";
-  }
-
-  function esc(s) {
-    var d = document.createElement("div");
-    d.textContent = String(s == null ? "" : s).slice(0, 70);
-    return d.innerHTML;
   }
 
   function init() {

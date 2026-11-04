@@ -19,14 +19,8 @@
     av.className = "avatar s72 t-" + tint;
     av.innerHTML = Store.initials(p.name) + '<span class="live"></span>';
     q("pName").textContent = p.name;
-    q("pUser").textContent = p.username;
+    q("pUser").textContent = p.username ? "@" + p.username : "\u2014";
     q("pPhone").textContent = p.phone || "No phone added";
-
-    /* the same four values as a read-only table; the inputs only appear in edit mode */
-    q("vName").textContent = p.name || "—";
-    q("vUser").textContent = "@" + (p.username || "—");
-    q("vPhone").textContent = p.phone || "not added";
-    q("vBio").textContent = p.bio || "no status set";
 
     document.querySelectorAll("#tints button").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.tint === tint));
@@ -36,19 +30,7 @@
     var threads = Object.keys(all).length;
     var msgs = Object.keys(all).reduce(function (n, id) { return n + all[id].messages.length; }, 0);
     var unread = Store.unreadTotal();
-    q("chatStat").textContent = "everything stays on this phone";
-    q("cThreads").textContent = threads;
-    q("cMsgs").textContent = msgs;
-    q("cUnread").textContent = unread ? unread : "0 · all read";
-    var bytes = 0;
-    try {
-      ["terox.users.v1", "terox.chats.v1", "terox.prefs.v1", "terox.profile.v1",
-       "terox.accounts.v1", "terox.session.v1"].forEach(function (k) {
-        bytes += (localStorage.getItem(k) || "").length;
-      });
-    } catch (e) {}
-    q("cBytes").innerHTML = (bytes / 1024).toFixed(1) + " KB in local storage" +
-      '<span class="sub">no server, no database</span>';
+    q("chatStat").textContent = threads + " chats \u00b7 " + msgs + " messages" + (unread ? " \u00b7 " + unread + " unread" : " \u00b7 all read");
   }
 
   function fill(v) {
@@ -59,9 +41,11 @@
 
   function setMode(on) {
     editing = on;
-    FIELDS.forEach(function (f) { input(f).disabled = !on; });
-    q("pTable").hidden = on;
-    q("pEdit").hidden = !on;
+    FIELDS.forEach(function (f) {
+      var el = input(f);
+      el.disabled = !on;
+      el.parentElement.classList.toggle("view", !on);
+    });
     q("formActions").hidden = !on;
     q("editBtn").textContent = on ? "Cancel" : "Edit";
     q("aboutHint").textContent = on ? "Save to apply across the app" : "Shown to everyone in your chat list";
@@ -120,7 +104,7 @@
       q("pAvatar").innerHTML = Store.initials(input("name").value || "?") + '<span class="live"></span>';
     });
     input("username").addEventListener("input", function () {
-      q("pUser").textContent = input("username").value.trim() || "—";
+      q("pUser").textContent = input("username").value.trim() ? "@" + input("username").value.trim() : "—";
     });
     input("phone").addEventListener("input", function () {
       q("pPhone").textContent = input("phone").value.trim() || "No phone added";
@@ -177,14 +161,14 @@
     if (!stat || !window.Auth) return;
     var acc = Auth.current();
     var all = Auth.accounts();
-    var count = q("acctCount");
-    stat.textContent = acc ? Auth.pretty(acc.mobile) : "not signed in";
-    if (count) count.textContent = all.length ? all.length + (all.length === 1 ? " account" : " accounts") + " on this device" : "none yet";
+    stat.textContent = acc ? "Signed in as " + Auth.pretty(acc.mobile) : "Signed out";
     if (btn) btn.hidden = !acc;
     if (note) {
-      note.innerHTML = (acc
-        ? (all.length > 1 ? "Pick another of the " + all.length + " numbers on the sign-in screen" : "The same number, or log out and use another")
-        : "Register with a name and a number") + '<span class="sub">no password, no server, no sync</span>';
+      note.textContent = acc
+        ? (all.length > 1
+            ? "Log out to switch to another of the " + all.length + " accounts on this device."
+            : "The only account on this device. Log out to sign in with another number.")
+        : "Sign in with the mobile number this account was created with.";
     }
     if (btn && !btn.wired) {
       btn.wired = true;

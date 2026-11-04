@@ -41,8 +41,11 @@
         <section class="card phero">
           <span class="avatar s72 t-accent" id="pAvatar">RV<span class="live"></span></span>
           <h1 id="pName">—</h1>
-          <p class="h">@<span id="pUser">—</span> · <span id="pPhone">—</span></p>
-          <p class="live"><span class="dot-status"></span> Online</p>
+          <div class="pid">
+            <div><span>Username</span><b id="pUser">—</b></div>
+            <div><span>Mobile</span><b id="pPhone" class="mono">—</b></div>
+            <div><span>Presence</span><b class="on"><span class="dot-status online"></span>Online</b></div>
+          </div>
           <div class="tints" id="tints" role="group" aria-label="Avatar colour (blue theme)">
             <button type="button" data-tint="accent" aria-label="Deep blue" aria-pressed="false"></button>
             <button type="button" data-tint="yes" aria-label="Dodger blue" aria-pressed="false"></button>
@@ -62,29 +65,20 @@
           </div>
 
           <form id="profileForm" autocomplete="off">
-            <table class="dt" id="pTable">
-              <tbody>
-                <tr><th scope="row">Name</th><td id="vName">—</td></tr>
-                <tr><th scope="row">Username</th><td id="vUser">@—</td></tr>
-                <tr><th scope="row">Mobile</th><td id="vPhone" class="mono">—</td></tr>
-                <tr><th scope="row">Status</th><td id="vBio">—</td></tr>
-              </tbody>
-            </table>
-
-            <div class="stack" id="pEdit" style="--gap:12px" hidden>
-              <div class="field" data-field="name">
+            <div class="stack" style="--gap:12px">
+              <div class="field view" data-field="name">
                 <label for="fName">Name</label>
                 <input class="input" id="fName" disabled />
               </div>
-              <div class="field" data-field="username">
+              <div class="field view" data-field="username">
                 <label for="fUsername">Username</label>
                 <input class="input" id="fUsername" disabled autocapitalize="none" />
               </div>
-              <div class="field" data-field="phone">
+              <div class="field view" data-field="phone">
                 <label for="fPhone">Phone</label>
                 <input class="input" id="fPhone" type="tel" disabled inputmode="tel" />
               </div>
-              <div class="field" data-field="bio">
+              <div class="field view" data-field="bio">
                 <label for="fBio">Status</label>
                 <textarea class="textarea" id="fBio" rows="2" disabled maxlength="120"></textarea>
               </div>
@@ -142,17 +136,11 @@
           <div class="card-head">
             <div>
               <h2>Account</h2>
-              <p>This device only</p>
+              <p id="acctStat">—</p>
             </div>
             <button class="btn ghost sm" type="button" id="signOutBtn">Log out</button>
           </div>
-          <table class="dt">
-            <tbody>
-                <tr><th scope="row">Signed in with</th><td id="acctStat" class="mono">—</td></tr>
-                <tr><th scope="row">Accounts here</th><td id="acctCount">—</td></tr>
-                <tr><th scope="row">Getting back in</th><td id="acctNote">The same number on this device<span class="sub">no password, no server, no sync</span></td></tr>
-            </tbody>
-          </table>
+          <p class="hint" id="acctNote">This number is your sign-in on this device — no password, no server.</p>
         </section>
 
         <!-- data -->
@@ -163,14 +151,6 @@
               <p id="chatStat">—</p>
             </div>
           </div>
-          <table class="dt">
-            <tbody>
-                <tr><th scope="row">Chats</th><td id="cThreads" class="mono">0</td></tr>
-                <tr><th scope="row">Messages</th><td id="cMsgs" class="mono">0</td></tr>
-                <tr><th scope="row">Unread</th><td id="cUnread" class="mono">0</td></tr>
-                <tr><th scope="row">Kept in</th><td id="cBytes">this browser<span class="sub">local storage, this device only</span></td></tr>
-            </tbody>
-          </table>
           <div class="pfoot">
             <button class="btn ghost" type="button" id="resetProfile">Reset profile</button>
             <button class="btn no" type="button" id="clearChats">Delete all chats</button>
