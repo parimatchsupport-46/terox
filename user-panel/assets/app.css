@@ -281,3 +281,25 @@
 .gate-saved .hint { margin: 0; font-size: 12px; color: var(--muted); }
 
 .gate-foot { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); text-align: center; }
+
+
+/* ---------- read-only detail tables (profile + a listed user's profile) ---------- */
+.dt { width: 100%; border-collapse: collapse; }
+.dt th,
+.dt td { text-align: left; vertical-align: middle; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.dt tr:last-child th,
+.dt tr:last-child td { border-bottom: 0; padding-bottom: 2px; }
+.dt th {
+  width: 40%; max-width: 142px; padding-right: 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+}
+.dt td { font-size: 14.5px; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.dt td .sub { display: block; margin-top: 2px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.dt td .mono, .dt td.mono { font-variant-numeric: tabular-nums; }
+.dt td.on { color: var(--online); }
+.dt td .thumb { float: left; width: 34px; height: 34px; margin: -3px 9px -3px 0; border-radius: 9px; object-fit: cover; }
+.dt td .dot-status { vertical-align: 1px; margin-right: 5px; }
+.dt td a { color: var(--accent); font-weight: 600; }
+
+/* a card head with a button beside it must not squash that button into two lines */
+.card-head .btn { flex: none; white-space: nowrap; }

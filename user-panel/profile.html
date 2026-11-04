@@ -27,10 +27,6 @@
     <header class="appbar">
       <div class="titles"><b>Profile</b></div>
       <div class="appbar-actions">
-        <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        </button>
         <button class="icon-btn solid" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
           <span class="pill" data-unread-pill hidden>0</span>
@@ -66,20 +62,29 @@
           </div>
 
           <form id="profileForm" autocomplete="off">
-            <div class="stack" style="--gap:12px">
-              <div class="field view" data-field="name">
+            <table class="dt" id="pTable">
+              <tbody>
+                <tr><th scope="row">Name</th><td id="vName">—</td></tr>
+                <tr><th scope="row">Username</th><td id="vUser">@—</td></tr>
+                <tr><th scope="row">Mobile</th><td id="vPhone" class="mono">—</td></tr>
+                <tr><th scope="row">Status</th><td id="vBio">—</td></tr>
+              </tbody>
+            </table>
+
+            <div class="stack" id="pEdit" style="--gap:12px" hidden>
+              <div class="field" data-field="name">
                 <label for="fName">Name</label>
                 <input class="input" id="fName" disabled />
               </div>
-              <div class="field view" data-field="username">
+              <div class="field" data-field="username">
                 <label for="fUsername">Username</label>
                 <input class="input" id="fUsername" disabled autocapitalize="none" />
               </div>
-              <div class="field view" data-field="phone">
+              <div class="field" data-field="phone">
                 <label for="fPhone">Phone</label>
                 <input class="input" id="fPhone" type="tel" disabled inputmode="tel" />
               </div>
-              <div class="field view" data-field="bio">
+              <div class="field" data-field="bio">
                 <label for="fBio">Status</label>
                 <textarea class="textarea" id="fBio" rows="2" disabled maxlength="120"></textarea>
               </div>
@@ -137,11 +142,17 @@
           <div class="card-head">
             <div>
               <h2>Account</h2>
-              <p id="acctStat">—</p>
+              <p>This device only</p>
             </div>
             <button class="btn ghost sm" type="button" id="signOutBtn">Log out</button>
           </div>
-          <p class="hint" id="acctNote">This number is your sign-in on this device — no password, no server.</p>
+          <table class="dt">
+            <tbody>
+                <tr><th scope="row">Signed in with</th><td id="acctStat" class="mono">—</td></tr>
+                <tr><th scope="row">Accounts here</th><td id="acctCount">—</td></tr>
+                <tr><th scope="row">Getting back in</th><td id="acctNote">The same number on this device<span class="sub">no password, no server, no sync</span></td></tr>
+            </tbody>
+          </table>
         </section>
 
         <!-- data -->
@@ -152,6 +163,14 @@
               <p id="chatStat">—</p>
             </div>
           </div>
+          <table class="dt">
+            <tbody>
+                <tr><th scope="row">Chats</th><td id="cThreads" class="mono">0</td></tr>
+                <tr><th scope="row">Messages</th><td id="cMsgs" class="mono">0</td></tr>
+                <tr><th scope="row">Unread</th><td id="cUnread" class="mono">0</td></tr>
+                <tr><th scope="row">Kept in</th><td id="cBytes">this browser<span class="sub">local storage, this device only</span></td></tr>
+            </tbody>
+          </table>
           <div class="pfoot">
             <button class="btn ghost" type="button" id="resetProfile">Reset profile</button>
             <button class="btn no" type="button" id="clearChats">Delete all chats</button>
@@ -191,13 +210,6 @@
       </a>
     </nav>
     <div class="drawer-foot">
-      <div class="rowline">
-        <span class="tl">Dark theme</span>
-        <label class="switch">
-          <input type="checkbox" id="darkSwitch" />
-          <span class="sl"></span>
-        </label>
-      </div>
       <p class="ver"><img class="ver-logo" src="assets/logo.png" alt="" width="16" height="16" /> Terox Chat · v1.0 · mobile only</p>
     </div>
   </aside>

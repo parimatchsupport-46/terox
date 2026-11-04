@@ -30,10 +30,6 @@
       </a>
       <div class="titles"><b id="barName">Profile</b></div>
       <div class="appbar-actions">
-        <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        </button>
         <button class="icon-btn solid" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
           <span class="pill" data-unread-pill hidden>0</span>
@@ -53,14 +49,30 @@
         </section>
 
         <section class="card">
-          <div class="card-head"><div><h2>About</h2><p>Shared by this user</p></div></div>
-          <p class="bio" id="uBio">—</p>
-          <dl class="kv">
-            <div><dt>Username</dt><dd id="uHandle">@—</dd></div>
-            <div><dt>Photo</dt><dd id="uPhoto">—</dd></div>
-            <div><dt>Chat activity</dt><dd id="uStat">—</dd></div>
-          </dl>
+          <div class="card-head"><div><h2>Details</h2><p>What the admin panel keeps for this user</p></div></div>
+          <table class="dt">
+            <tbody>
+                <tr><th scope="row">Name</th><td id="uFull">—</td></tr>
+                <tr><th scope="row">Username</th><td id="uHandle">—</td></tr>
+                <tr><th scope="row">Role</th><td id="uRole">—</td></tr>
+                <tr><th scope="row">Status</th><td id="uBio">—</td></tr>
+                <tr><th scope="row">Presence</th><td id="uPresence" class="on"><span class="dot-status online"></span>Online</td></tr>
+                <tr><th scope="row">Profile photo</th><td id="uPhoto">—</td></tr>
+            </tbody>
+          </table>
         </section>
+
+        <section class="card">
+          <div class="card-head"><div><h2>Chat on this device</h2><p>Only in this browser</p></div></div>
+          <table class="dt">
+            <tbody>
+                <tr><th scope="row">Messages</th><td id="uMsgs" class="mono">0</td></tr>
+                <tr><th scope="row">Unread</th><td id="uUnread" class="mono">0</td></tr>
+                <tr><th scope="row">Last message</th><td id="uLast">—</td></tr>
+            </tbody>
+          </table>
+        </section>
+
 
         <div class="pfoot">
           <a class="btn yes" id="uChat" href="chat.html">Message</a>
@@ -100,13 +112,6 @@
       </a>
     </nav>
     <div class="drawer-foot">
-      <div class="rowline">
-        <span class="tl">Dark theme</span>
-        <label class="switch">
-          <input type="checkbox" id="darkSwitch" />
-          <span class="sl"></span>
-        </label>
-      </div>
       <p class="ver"><img class="ver-logo" src="assets/logo.png" alt="" width="16" height="16" /> Terox Chat · v1.0 · mobile only</p>
     </div>
   </aside>
