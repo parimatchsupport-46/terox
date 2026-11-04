@@ -362,48 +362,6 @@
     return m;
   }
 
-  function seed() {
-    return {
-      meera: [
-        msg("them", "Bhai mobile layout pe kaam shuru karun?", now - 2 * DAY),
-        msg("me", "Haan, pehle list screen clean karo.", now - 2 * DAY + 3 * MIN),
-        msg("them", "Done. Ab sirf users ki list hai, sab online.", now - 26 * HR),
-        msg("me", "Perfect, composer bhi wahi pattern follow karo.", now - 25 * HR),
-        msg("them", "Kar diya. Reply + edit + delete sab tap pe aata hai.", now - 18 * MIN)
-      ],
-      aarav: [
-        msg("them", "Radius 6px rakha hai, library ke match.", now - 30 * HR),
-        msg("me", "6px hi sahi hai, subtle lagta hai.", now - 29 * HR),
-        msg("them", "Shadow bhi same: 0 8px 30px rgba(0,0,0,.08)", now - 5 * HR)
-      ],
-      kabir: [
-        msg("them", "Sync ho gaya, ab unread count bhi aa raha hai", now - 3 * HR),
-        msg("them", "Ek aur patch bhej raha hoon", now - 40 * MIN, { unread: true })
-      ],
-      zoya: [msg("me", "Zoom lock test ho gaya? ✅", now - 20 * HR)],
-      nafisa: [msg("them", "Launch copy bhej diya hai, ek look de dena", now - 2 * DAY - 2 * HR)],
-      dev: [msg("them", "Android side se koi issue nahi aaya", now - 4 * DAY)],
-      priya: [msg("me", "Dashboard numbers calibrate ho gaye?", now - 6 * DAY)],
-      harsh: [msg("them", "2 tickets pending hain, kal dekh lena", now - 8 * DAY)]
-    };
-  }
-
-  /* the one unread seed lives inside a message flag — fold it onto the thread */
-  function normalise(raw) {
-    var out = {};
-    Object.keys(raw).forEach(function (id) {
-      var list = raw[id].map(function (m) {
-        var copy = { id: m.id || mid(), from: m.from, text: m.text, at: m.at };
-        if (m.replyTo) copy.replyTo = m.replyTo;
-        if (m.editedAt) copy.editedAt = m.editedAt;
-        return copy;
-      });
-      var unread = raw[id].reduce(function (n, m) { return n + (m.unread ? 1 : 0); }, 0);
-      out[id] = { messages: list, unread: unread };
-    });
-    return out;
-  }
-
   function read(key, fallback) {
     try {
       var raw = global.localStorage.getItem(key);
@@ -509,12 +467,12 @@
   }
 
   /* ---------------- threads ---------------- */
+  /* nothing ships with the app: every thread starts empty on a fresh device */
   function chats() {
     var stored = read(KEY.chats, null);
-    if (stored && stored.meera) return stored;
-    var seeded = normalise(seed());
-    write(KEY.chats, seeded);
-    return seeded;
+    if (stored && typeof stored === "object") return stored;
+    write(KEY.chats, {});
+    return {};
   }
   function saveChats(next) {
     write(KEY.chats, next);
@@ -550,17 +508,17 @@
   function append(id, text, opts) {
     var all = chats();
     var t = all[id] || { messages: [], unread: 0 };
-    var m = msg("me", text, Date.now());
-    if (opts && opts.replyTo) m.replyTo = opts.replyTo;
+    var m = msg("me", text, Date.now(), opts || null);
     t.messages.push(m);
     all[id] = t;
     saveChats(all);
     return m;
   }
-  function receive(id, text, replyTo) {
+  function receive(id, text, extra) {
     var all = chats();
     var t = all[id] || { messages: [], unread: 0 };
-    var m = msg("them", text, Date.now(), replyTo ? { replyTo: replyTo } : null);
+    var opts = typeof extra === "string" ? { replyTo: extra } : (extra || null);
+    var m = msg("them", text, Date.now(), opts);
     t.messages.push(m);
     all[id] = t;
     saveChats(all);

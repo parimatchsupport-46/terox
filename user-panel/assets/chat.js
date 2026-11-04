@@ -2,30 +2,74 @@
    chat.js — thread view + composer + tap-to-open message action sheet.
    Sheet actions: Reply · Copy · Edit · Delete (plus message, date and time
    in its header). All state goes through Store so Home/Profile stay in sync.
+
+   The thread always starts empty. A taps "Start chat" to say hello, then the
+   peer (B) answers on a scripted beat — 4s pause, 3s typing animation, then
+   the rate card. Every option in B's bubble is a button: tapping it sends
+   that choice as A's message, B types 3s and sends the next step, until the
+   payment card, where "Pay now" opens the payment dialog. No backend: the
+   whole exchange is driven from this file and stored in local storage.
    ========================================================================== */
 (function () {
   "use strict";
 
   var EMOJI = ["👍", "🙏", "😄", "🔥", "🎉", "✅", "🚀", "❤️", "😅", "🤝"];
-  var REPLIES = {
-    meera: ["Done ✅", "Ek min, dekh raha hoon.", "Haan bilkul, mobile pe test ho gaya."],
-    aarav: ["Radius 6px hi rakhna 👍", "Shadow same rakhunga.", "Bhej deta hoon design."],
-    kabir: ["Sync ho gaya.", "API se bhej raha hoon, 2 min.", "Haan mil gaya issue."],
-    zoya: ["Test pass ✅", "Ek edge case aur check kar leta hoon.", "Screenshot bhej diya."],
-    nafisa: ["Copy bhej di hai, dekh lena.", "Thoda crisp kar dun?", "Approved 👍"],
-    dev: ["Android pe clean chal raha hai.", "Build push kar diya.", "Haan dekh leta hoon."],
-    priya: ["Numbers match kar rahe hain.", "Report bhej dunga kal.", "Haan calibrate ho gaya."],
-    harsh: ["Ticket update kar diya.", "User ko reply bhej diya.", "Kal follow-up kar lunga."]
-  };
+
+  /* ---- the rate card, exactly as agreed: duration + voice/video prices ---- */
+  var RATE = [
+    { d: "5 min", v: 200, x: 500 },
+    { d: "10 min", v: 300, x: 1000 },
+    { d: "20 min", v: 600, x: 1500 },
+    { d: "30 min", v: 900, x: 2000 },
+    { d: "40 min", v: 1200, x: 2500 },
+    { d: "1 hour", v: 1800, x: 4000 }
+  ];
+  var SECTIONS = [
+    { name: "Voice calling", key: "v" },
+    { name: "Video calling", key: "x" }
+  ];
+  var NOTES = [
+    "❌ Free proof available nahi hain.",
+    "✅ QR code se payment — payment ke bina koi service provide nahi ki jayegi.",
+    "❤️ Thank You!"
+  ];
+
+  /* ---- the beat: 4s before the first answer, 3s of typing, then the message ---- */
+  var FIRST_WAIT = 4000;
+  var NEXT_WAIT = 500;
+  var TYPING = 3000;
+
+  /* what B sends after each of A's choices */
+  var NEXT = { start: "services", "pick-plan": "calls", "pick-type": "pay", paid: "ack" };
+  /* what B repeats if A types instead of tapping an option */
+  var PENDING = { services: "services", calls: "calls", pay: "pay" };
 
   var el = {};
   var uid = null;
   var pendingReply = null;   /* message id being replied to */
   var editingId = null;      /* message id being edited   */
   var activeMsg = null;      /* message id in the sheet   */
-  var replyTimer = null;
+  var waitTimer = null;      /* the scripted flow's timer  */
+  var payMsg = null;         /* the pay bubble that opened the dialog */
+  var picks = blankPicks();
 
+  function blankPicks() {
+    return { d: null, svc: null, sec: null, mode: null, key: null, amount: null };
+  }
   function q(id) { return document.getElementById(id); }
+  function mk(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function first() { return Store.user(uid).name.split(" ")[0]; }
+  function price(d, key) {
+    var r = null;
+    for (var i = 0; i < RATE.length; i++) if (RATE[i].d === d) r = RATE[i];
+    return r ? "₹" + (key === "x" ? r.x : r.v) : "—";
+  }
+  function money(n) { return "₹" + n; }
 
   function cache() {
     el.thread = q("thread");
@@ -53,6 +97,8 @@
     el.sheetTime = q("sheetTime");
     el.sheetFrom = q("sheetFrom");
     el.sheetEdited = q("sheetEdited");
+    el.pay = q("payDlg");
+    el.payScrim = q("payScrim");
   }
 
   /* ---------------- thread ---------------- */
@@ -66,20 +112,22 @@
     el.peerProfile.href = "user.html?u=" + encodeURIComponent(p.id);
     document.title = p.name + " · Terox Chat";
     Store.markRead(uid);
+    cancelReply();
+    closePay();
+    picks = blankPicks();
     render();
     scrollEnd(false);
+    resume();
   }
 
   function render() {
     var t = Store.thread(uid);
     var user = Store.user(uid);
     el.thread.innerHTML = "";
+    readPicks(t.messages);
 
     if (!t.messages.length) {
-      var empty = document.createElement("p");
-      empty.className = "empty";
-      empty.textContent = "No messages yet — say hi ko " + user.name.split(" ")[0] + " 👋";
-      el.thread.appendChild(empty);
+      el.thread.appendChild(startCard());
       return;
     }
 
@@ -95,6 +143,21 @@
       }
       el.thread.appendChild(row(m, user, t));
     });
+  }
+
+  /* an empty thread is a starting point, not a wall of old chat */
+  function startCard() {
+    var card = mk("div", "chat-start");
+    var ttl = mk("b", null, "Say hello to " + first() + " 👋");
+    var p = mk("p", null, "Abhi tak koi message nahi hai. Start dabaiye — " + first() + " rate card bhejenge, usme se apna plan chun lijiye.");
+    var btn = mk("button", "btn block", "Start chat — say hello 👋");
+    btn.type = "button";
+    btn.id = "startChat";
+    btn.addEventListener("click", startChat);
+    card.appendChild(ttl);
+    card.appendChild(p);
+    card.appendChild(btn);
+    return card;
   }
 
   function row(m, user, t) {
@@ -137,8 +200,13 @@
     }
 
     var body = document.createElement("span");
+    body.className = "mtext";
     body.textContent = m.text;
     b.appendChild(body);
+
+    if (!mine && m.kind === "services") b.appendChild(rateCard());
+    if (!mine && m.kind === "calls") b.appendChild(typePicker());
+    if (!mine && m.kind === "pay") b.appendChild(payAsk(m));
 
     var tEl = document.createElement("span");
     tEl.className = "t";
@@ -146,7 +214,10 @@
     if (m.editedAt) tEl.classList.add("edited");
     b.appendChild(tEl);
 
-    b.addEventListener("click", function () { openSheet(m.id); });
+    b.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest(".opt, .pay-now")) return;
+      openSheet(m.id);
+    });
     b.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSheet(m.id); }
     });
@@ -194,8 +265,8 @@
     el.sheet.classList.add("open");
     el.sheet.setAttribute("aria-hidden", "false");
     document.body.classList.add("locked");
-    var first = el.sheet.querySelector(".sheet-actions button:not([hidden])");
-    if (first) first.focus({ preventScroll: true });
+    var first2 = el.sheet.querySelector(".sheet-actions button:not([hidden])");
+    if (first2) first2.focus({ preventScroll: true });
   }
 
   function closeSheet() {
@@ -315,7 +386,7 @@
       return;
     }
 
-    var sent = Store.append(uid, text, pendingReply ? { replyTo: pendingReply } : null);
+    Store.append(uid, text, pendingReply ? { replyTo: pendingReply } : null);
     pendingReply = null;
     el.input.value = "";
     syncCtx();
@@ -323,32 +394,239 @@
     render();
     scrollEnd(true);
     UI.hydrate();
-    simulateReply(sent);
+    typedInstead();
   }
 
-  /* the peer answers with loader dots first — no backend in this demo */
-  function simulateReply(sent) {
-    clearTimeout(replyTimer);
-    var pool = REPLIES[uid] || ["👍"];
-    el.typingWho.textContent = Store.user(uid).name.split(" ")[0] + " is typing…";
-    el.typing.hidden = false;
-    var row = document.createElement("div");
-    row.className = "msg typing";
-    row.innerHTML = '<span class="bubble"><span class="spinner-dots" role="status" aria-label="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></span>';
-    row.id = "typingRow";
-    el.thread.appendChild(row);
-    scrollEnd(true);
+  /* ---------------- the scripted peer ---------------- */
+  function lastPeer() {
+    var list = Store.thread(uid).messages;
+    for (var i = list.length - 1; i >= 0; i--) if (list[i].from === "them") return list[i];
+    return null;
+  }
 
-    replyTimer = setTimeout(function () {
-      el.typing.hidden = true;
-      var r = document.getElementById("typingRow");
-      if (r) r.remove();
-      var text = pool[Math.floor(Math.random() * pool.length)];
-      Store.receive(uid, text, sent && sent.id ? sent.id : null);
-      render();
-      scrollEnd(true);
-      UI.hydrate();
-    }, 900 + Math.random() * 800);
+  /* the choice A has already made, read back out of the stored thread */
+  function readPicks(list) {
+    picks = blankPicks();
+    list.forEach(function (m) {
+      if (m.from !== "me" || !m.pick) return;
+      if (m.kind === "pick-plan") {
+        picks.d = m.pick.d;
+        picks.svc = m.pick.svc;
+        picks.sec = m.pick.sec;
+      }
+      if (m.kind === "pick-type" || m.kind === "paid") {
+        picks.mode = m.pick.mode;
+        picks.key = m.pick.key;
+      }
+    });
+    picks.amount = picks.d ? price(picks.d, picks.key || picks.sec) : null;
+  }
+
+  function showTyping(on) {
+    var old = document.getElementById("typingRow");
+    if (old) old.remove();
+    if (!on) {
+      if (el.typing) el.typing.hidden = true;
+      return;
+    }
+    el.typingWho.textContent = first() + " is typing…";
+    el.typing.hidden = false;
+    var r = mk("div", "msg typing");
+    r.id = "typingRow";
+    var dots = mk("span", "spinner-dots");
+    dots.setAttribute("role", "status");
+    dots.setAttribute("aria-label", "typing");
+    for (var i = 0; i < 3; i++) dots.appendChild(mk("span", "dot"));
+    var b = mk("span", "bubble");
+    b.appendChild(dots);
+    r.appendChild(b);
+    el.thread.appendChild(r);
+    scrollEnd(true);
+  }
+
+  function cancelReply() {
+    clearTimeout(waitTimer);
+    waitTimer = null;
+    if (el.typing) el.typing.hidden = true;
+    var r = document.getElementById("typingRow");
+    if (r) r.remove();
+  }
+
+  /* one beat of the flow: wait, type for 3s, then B's message lands */
+  function queueReply(step) {
+    if (!step || !STEPS[step]) return;
+    clearTimeout(waitTimer);
+    waitTimer = setTimeout(function () {
+      showTyping(true);
+      waitTimer = setTimeout(function () {
+        showTyping(false);
+        STEPS[step].send();
+        render();
+        scrollEnd(true);
+        UI.hydrate();
+      }, TYPING);
+    }, STEPS[step].pre);
+  }
+
+  var STEPS = {
+    services: {
+      pre: FIRST_WAIT,
+      send: function () {
+        Store.receive(uid, "Rate card 👇 niche se apna plan tap kar dijiye.", { kind: "services" });
+      }
+    },
+    calls: {
+      pre: NEXT_WAIT,
+      send: function () {
+        Store.receive(uid, "Ab bataiye — call kis mode me karni hai?", { kind: "calls" });
+      }
+    },
+    pay: {
+      pre: NEXT_WAIT,
+      send: function () {
+        Store.receive(uid, "Payment kijiye — payment ke bina service start nahi hogi.", {
+          kind: "pay",
+          pick: { d: picks.d, svc: picks.svc, mode: picks.mode, key: picks.key, amount: picks.amount }
+        });
+      }
+    },
+    ack: {
+      pre: NEXT_WAIT,
+      send: function () {
+        Store.receive(uid, "Payment mil gaya ✅ " + (picks.mode || "Call") + " · " + (picks.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
+      }
+    }
+  };
+
+  function startChat() {
+    Store.append(uid, "Hello 👋", { kind: "start" });
+    render();
+    scrollEnd(true);
+    UI.hydrate();
+    queueReply("services");
+  }
+
+  /* a tap on one of B's options: the choice is sent as A's message */
+  function sendPick(text, kind, pick, replyToPeer) {
+    var opts = { kind: kind, pick: pick || null };
+    if (replyToPeer !== false) {
+      var peer = lastPeer();
+      if (peer) opts.replyTo = peer.id;
+    }
+    Store.append(uid, text, opts);
+    readPicks(Store.thread(uid).messages);
+    render();
+    scrollEnd(true);
+    UI.hydrate();
+    queueReply(NEXT[kind]);
+  }
+
+  /* if A types instead of tapping, B repeats the step it is waiting on */
+  function typedInstead() {
+    var last = Store.thread(uid).messages.slice(-1)[0];
+    if (!last || last.from !== "me") return;
+    if (NEXT[last.kind]) return;              /* the flow moved on by itself */
+    var peer = lastPeer();
+    if (peer && PENDING[peer.kind]) queueReply(PENDING[peer.kind]);
+  }
+
+  /* coming back to a half-finished thread picks up where it stopped */
+  function resume() {
+    var last = Store.thread(uid).messages.slice(-1)[0];
+    if (last && last.from === "me" && NEXT[last.kind]) queueReply(NEXT[last.kind]);
+  }
+
+  /* ---------------- B's option blocks ---------------- */
+  function rateCard() {
+    var wrap = mk("div", "opts");
+    SECTIONS.forEach(function (sec) {
+      wrap.appendChild(mk("p", "opts-h", sec.name));
+      RATE.forEach(function (r) {
+        var amt = money(sec.key === "x" ? r.x : r.v);
+        var b = mk("button", "opt");
+        b.type = "button";
+        b.appendChild(mk("span", "lbl", r.d));
+        b.appendChild(mk("span", "price", amt));
+        b.addEventListener("click", function (e) {
+          e.stopPropagation();
+          sendPick(sec.name + " · " + r.d + " · " + amt, "pick-plan", { d: r.d, sec: sec.key, svc: sec.name });
+        });
+        wrap.appendChild(b);
+      });
+    });
+    NOTES.forEach(function (n) { wrap.appendChild(mk("p", "opts-n", n)); });
+    return wrap;
+  }
+
+  function typePicker() {
+    var wrap = mk("div", "opts");
+    [
+      { ic: "📞", name: "Voice calling", key: "v" },
+      { ic: "🎥", name: "Video calling", key: "x" }
+    ].forEach(function (o) {
+      var b = mk("button", "opt big");
+      b.type = "button";
+      b.appendChild(mk("span", "ic", o.ic));
+      b.appendChild(mk("span", "lbl", o.name));
+      b.appendChild(mk("span", "price", price(picks.d || "10 min", o.key)));
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        sendPick(o.name + " ✅", "pick-type", { mode: o.name, key: o.key });
+      });
+      wrap.appendChild(b);
+    });
+    wrap.appendChild(mk("p", "opts-n", "Rate aapke chune hue plan ke hisaab se lagega."));
+    return wrap;
+  }
+
+  function payAsk(m) {
+    var p = m.pick || {};
+    var wrap = mk("div", "askpay");
+    var sum = mk("div", "sum");
+    [["Service", p.mode || p.svc || "—"], ["Duration", p.d || "—"], ["Amount", p.amount || "—"]].forEach(function (pair) {
+      var r2 = mk("div");
+      r2.appendChild(mk("span", null, pair[0]));
+      r2.appendChild(mk("b", null, pair[1]));
+      sum.appendChild(r2);
+    });
+    var btn = mk("button", "pay-now", "Pay now " + (p.amount || ""));
+    btn.type = "button";
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openPay(m);
+    });
+    wrap.appendChild(sum);
+    wrap.appendChild(btn);
+    wrap.appendChild(mk("p", "opts-n", "QR scan karke payment kijiye, phir “I’ve paid” dabaiye."));
+    return wrap;
+  }
+
+  /* ---------------- payment dialog (frame: the contents come next) ---------------- */
+  function openPay(m) {
+    payMsg = m;
+    var p = m.pick || {};
+    q("paySub").textContent = "Pay " + (p.amount || "") + " to " + first();
+    q("payService").textContent = p.mode || p.svc || "—";
+    q("payPlan").textContent = p.d || "—";
+    q("payAmount").textContent = p.amount || "—";
+    el.pay.hidden = false;
+    document.body.classList.add("locked");
+    var done = q("payDone");
+    if (done && done.focus) done.focus({ preventScroll: true });
+  }
+
+  function closePay() {
+    if (!el.pay || el.pay.hidden) return;
+    el.pay.hidden = true;
+    payMsg = null;
+    document.body.classList.remove("locked");
+  }
+
+  function paid() {
+    var p = (payMsg && payMsg.pick) || {};
+    closePay();
+    sendPick("Payment kar diya ✅", "paid", { mode: p.mode, key: p.key, d: p.d, amount: p.amount });
+    UI.toast("Bhej diya — " + first() + " confirm karenge", "ok");
   }
 
   /* ---------------- wiring ---------------- */
@@ -359,8 +637,8 @@
     var wanted = params.get("u");
     if (wanted && Store.user(wanted).id === wanted) openUser(wanted);
     else {
-      var first = Store.order()[0];
-      openUser(first ? first.id : Store.USERS[0].id);
+      var firstU = Store.order()[0];
+      openUser(firstU ? firstU.id : Store.USERS[0].id);
     }
 
     el.form.addEventListener("submit", function (e) { e.preventDefault(); submit(); });
@@ -403,10 +681,22 @@
     });
     el.sheetScrim.addEventListener("click", closeSheet);
     q("sheetClose").addEventListener("click", closeSheet);
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (el.pay && !el.pay.hidden) closePay();
+      else closeSheet();
+    });
     el.thread.addEventListener("click", function (e) {
       if (e.target === el.thread) closeSheet();
     });
+
+    q("payClose").addEventListener("click", closePay);
+    q("payLater").addEventListener("click", function () {
+      closePay();
+      UI.toast("Payment ke bina service provide nahi ki jayegi", "bad");
+    });
+    q("payDone").addEventListener("click", paid);
+    el.payScrim.addEventListener("click", closePay);
 
     var hint = Store.prefs().enterToSend
       ? "Tap a message to reply, copy, edit or delete"
