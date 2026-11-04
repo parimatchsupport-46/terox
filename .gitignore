@@ -5,5 +5,7 @@ Thumbs.db
 .idea/
 .vscode/
 
-# people photos stay local: the roster JSON is committed, the images are not
-assets/avatars/*.jpg
+# people's photos stay out of git: the roster JSON records which file each user
+# owns, and each panel keeps its own copy of the pool for local previews
+user-panel/assets/avatars/*.jpg
+admin-panel/assets/avatars/*.jpg

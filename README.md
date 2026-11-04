@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/logo.png" width="84" height="84" alt="Terox Chat logo" /></p>
+<p align="center"><img src="user-panel/assets/logo.png" width="84" height="84" alt="Terox Chat logo" /></p>
 
 # Terox Chat
 
@@ -6,15 +6,29 @@ A mobile-only chat app: all users in one list, one-on-one threads, and tap-a-mes
 actions (reply / copy / edit / delete). Plain HTML, CSS and JS — no build step, no
 framework, no backend. State lives in `localStorage`.
 
+## Two folders
+
+```
+user-panel/    the chat app        (index / chat / profile / user + assets + data)
+admin-panel/   the roster manager  (index + assets + data)
+```
+
+Each folder is **self-contained** — it carries its own `assets/` and `data/`, and no file
+in either one reaches outside with `../`. That is what lets you deploy or serve a panel on
+its own, and it is why the five runtime files both panels need (`ui.css`, `ui.js`,
+`store.js`, `firebase.js`, `firebase-config.js`) exist as byte-identical copies. The test
+suite fails if the two copies ever drift apart.
+
 ## Run
 
 ```bash
-python3 -m http.server 5173   # then open http://localhost:5173  (admin at /admin/)
+python3 -m http.server 5173
+#   http://localhost:5173/user-panel/     the chat app
+#   http://localhost:5173/admin-panel/    the admin panel
 ```
 
-Live copy: <https://parimatchsupport-46.github.io/terox/> — admin panel at
-<https://parimatchsupport-46.github.io/terox/admin/>.
-
+Live copy: <https://parimatchsupport-46.github.io/terox/> (redirects to the user panel);
+admin at <https://parimatchsupport-46.github.io/terox/admin-panel/>.
 Open the pages **through a server, never through a `raw.` link or a file preview pane**:
 the screens are plain HTML + linked CSS + linked JS, and `raw.githubusercontent.com`
 serves `.css` as `text/plain` with `nosniff`, so the browser refuses to apply it and
@@ -24,9 +38,11 @@ copy shows initials + tint until the images are committed.
 
 ## Admin panel
 
-`admin/index.html` is where the roster is made. It is responsive — a two-column
-roster + form on a desktop, a single column with the form as a bottom sheet on a
-phone (pinch zoom stays on there, unlike the chat screens).
+`admin-panel/index.html`. On a desktop it is a real two-column layout — the roster on the
+left, a 408px create/edit column on the right that stays in view while the list scrolls,
+content capped at 1240px and centred. Below 940px it collapses to one column and the form
+becomes a bottom sheet. Pinch zoom stays on here (unlike the chat screens) and every
+control keeps a 44px touch target.
 
 - A user is created from **name, username, bio**, and the admin **uploads the profile
   image as a file** — there is no URL field anywhere. The file is dropped on the panel,
@@ -38,12 +54,12 @@ phone (pinch zoom stays on there, unlike the chat screens).
   yet, so one image belongs to exactly one user, and deleting a user returns theirs.
 - Create, edit, delete (with Undo), search, and Export / Import of
   `data/users.json` for shipping the roster.
-- The panel writes to the same store the chat reads (`terox.users.v1`), so a created
-  user appears on the home list in that browser immediately; the JSON file is what
-  you commit so other devices get the same roster.
-
-Open it at `/admin/` while the preview is running. The avatar images are people's
-photos, so they are gitignored — `data/users.json` records which file each user owns.
+- The panel writes to the same store the chat reads (`terox.users.v1`), so a created user
+  appears on the home list in that browser immediately. **View** on a row opens that
+  user's profile in the user panel — on the Pages site that is the sibling folder; when
+  the panel is deployed on its own, set `window.TEROX_APP_BASE` to the user panel's URL.
+- The people photos are gitignored, so a fresh clone shows initials + tint until
+  `assets/avatars/*.jpg` is put in place.
 
 ## Firebase (optional, and what makes it multi-device)
 
@@ -62,8 +78,10 @@ Two ways to give it the config, both fine:
 1. **In the panel** — tap the status chip (`this device only`) → paste the `firebaseConfig`
    object → *Connect in this browser*. Use *Download assets/firebase-config.js* to turn that
    into the file for everyone else.
-2. **In the repo** — fill `assets/firebase-config.js` (it ships with empty strings) and
-   commit it. A filled file wins; an empty one is ignored so the panel's own config still works.
+2. **In the repo** — fill `admin-panel/assets/firebase-config.js` (it ships with empty
+   strings), then copy the same file to `user-panel/assets/firebase-config.js`, since each
+   folder carries its own copy. A filled file wins; an empty one is ignored, so the panel's
+   own saved config still works.
 
 Firebase console: create a project → add a Web app → enable **Firestore** (production mode),
 **Storage** and **Authentication → Email/Password**, then create the admin user. The web
@@ -104,23 +122,20 @@ the panel says so in that same chip and keeps working on the device.
 
 ## Vercel
 
-Push the repo and import it; **set Root Directory to the repository root** (not `admin/`)
-so the panel can still reach `../assets/…`. Then:
+Two static sites, no build command, no install command — and because neither folder uses
+`../`, each one can be its own project:
 
-- app: `https://<your-app>.vercel.app/`
-- admin: `https://<your-app>.vercel.app/admin`  (`vercel.json` rewrites `/admin` to `/admin/index.html`)
+| Project | Root Directory | Output |
+| --- | --- | --- |
+| admin | `admin-panel` | `https://terox-admin-8740.vercel.app/` |
+| app | `user-panel` | `https://<app>.vercel.app/` |
 
-No environment variables are needed — the web config is public and lives in
-`assets/firebase-config.js`. Open the admin panel, connect Firebase from the chip, sign
-in, and every user you create is on Firestore within a moment of saving.
-
-<p align="center"><img src="assets/logo.png" width="84" height="84" alt="Terox Chat logo" /></p>
-
-# Terox Chat
-
-A mobile-only chat app: all users in one list, one-on-one threads, and tap-a-message
-actions (reply / copy / edit / delete). Plain HTML, CSS and JS — no build step, no
-framework, no backend. State lives in `localStorage`.
+If you would rather have one project, set Root Directory to the repository root and use
+`/admin-panel/` and `/user-panel/` as the paths — each folder has a `vercel.json` with
+cache headers, and the repo root has a plain redirect to the user panel. No environment
+variables: the web config is public and lives in `firebase-config.js`. After a deploy,
+open the admin panel, connect Firebase from the chip, sign in, and every user you create
+lands on Firestore within a moment of saving.
 
 ## Screens
 
@@ -176,20 +191,30 @@ plain file input and crops it on a canvas instead.
 ## Files
 
 ```
-index.html  chat.html  profile.html  user.html
-admin/index.html       the panel (create / edit / delete, upload, connection)
-admin/admin.css        panel layout: two columns on a desktop, a sheet on a phone
-admin/admin.js         form, validation, pool rule, upload, export/import
-data/users.json        the roster the admin panel edits and exports
-data/avatars.json      the ordered list of pool images
-assets/ui.css          tokens + reused components (shared with the panel)
-assets/app.css         the four chat screens
-assets/ui.js           theme, drawer, toasts, zoom lock, avatar markup
-assets/store.js        the roster + chats + prefs, mirrored to Firebase when configured
-assets/firebase.js     optional cloud layer: Firestore roster, Storage images, sign-in
-assets/firebase-config.js  paste the web config here (empty strings = this device only)
-assets/home.js  assets/chat.js  assets/profile.js  assets/user.js
-assets/logo.png  assets/logo-32.png  assets/logo-64.png
-assets/avatars/  the image pool, one file per user — local only, gitignored
-vercel.json      rewrites + caching for a static deploy
+user-panel/index.html            home: the roster (search, live dot, photo)
+user-panel/chat.html             one thread: bubbles, reply/edit/copy/delete modal
+user-panel/profile.html          my profile: prefs, theme, data controls
+user-panel/user.html?u=<id>      read-only profile of any user
+user-panel/assets/ui.css         the design system (both folders carry the same copy)
+user-panel/assets/app.css        the four chat screens
+user-panel/assets/ui.js          theme, drawer, toasts, zoom lock, avatar markup
+user-panel/assets/store.js       the roster + chats + prefs, mirrored to Firebase
+user-panel/assets/firebase.js    the optional cloud layer
+user-panel/assets/firebase-config.js   paste the web config here (empty = local only)
+user-panel/assets/{home,chat,profile,user}.js
+user-panel/assets/avatars/       the image pool — gitignored
+user-panel/data/{users,avatars}.json
+
+admin-panel/index.html           one screen: roster, form, dialogs
+admin-panel/assets/admin.css     the panel layout (desktop two-column, phone sheet)
+admin-panel/assets/admin.js      form, validation, pool rule, upload, export/import
+admin-panel/assets/ui.css  ui.js  store.js  firebase.js  firebase-config.js   (copies)
+admin-panel/assets/avatars/      its own copy of the pool — gitignored
+admin-panel/data/{users,avatars}.json
+
+index.html                       redirect to the user panel
+*/vercel.json                    cache headers for a static deploy
 ```
+
+The suite that checks all of this lives outside the repo (`../test-harness`), so the app
+folders stay lean: no tests, no fixtures, no build config.

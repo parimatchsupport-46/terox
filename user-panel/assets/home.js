@@ -31,7 +31,7 @@
     if (!rows.length) {
       list.innerHTML = roster.length
         ? '<p class="empty">Koi user nahi mila — "' + escapeHtml(filter) + '"</p>'
-        : '<p class="empty">Abhi koi user nahi. Admin panel se banaiye — <a href="admin/index.html">open admin</a>.</p>';
+        : '<p class="empty">Abhi koi user nahi. Admin panel se banaiye — <a href="../admin-panel/index.html">open admin</a>.</p>';
       return;
     }
 

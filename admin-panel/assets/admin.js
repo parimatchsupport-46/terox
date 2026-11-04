@@ -119,9 +119,10 @@
     });
     list.forEach(function (u) { if (u.photo) used += 1; });
 
+    /* the header already states the total, so this only appears while filtering */
     q("listCount").textContent = rows.length === list.length
-      ? list.length + (list.length === 1 ? " user" : " users")
-      : rows.length + " of " + list.length + " users";
+      ? ""
+      : rows.length + " of " + list.length + (list.length === 1 ? " match" : " match");
 
     if (!rows.length) {
       ul.className = "adm-list card empty-state";
@@ -156,7 +157,10 @@
       else { tag.textContent = "pool empty · initials only"; }
 
       li.querySelector('[data-act="view"]').addEventListener("click", function () {
-        window.open("../user.html?u=" + encodeURIComponent(u.id), "_blank");
+        /* the user panel is a sibling folder on the Pages site; when this panel is
+           deployed on its own, set window.TEROX_APP_BASE to its public URL */
+        var base = window.TEROX_APP_BASE || (location.pathname.indexOf("/admin-panel/") > -1 ? "../user-panel/" : "../");
+        window.open(base + "user.html?u=" + encodeURIComponent(u.id), "_blank");
       });
       li.querySelector('[data-act="edit"]').addEventListener("click", function () { openEdit(u.id); });
       li.querySelector('[data-act="del"]').addEventListener("click", function () { del(u.id); });

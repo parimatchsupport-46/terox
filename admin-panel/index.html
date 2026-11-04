@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f5f7" id="themeColor" />
   <meta name="description" content="Terox Chat admin — create and manage the users that show up on the chat home page." />
-  <link rel="icon" type="image/png" sizes="32x32" href="../assets/logo-32.png" />
-  <link rel="apple-touch-icon" href="../assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo-32.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
   <title>Admin · Terox Chat</title>
   <style>
-    /* a few lines inline so the page is never naked if ../assets/ is unreachable */
+    /* a few lines inline so the page is never naked if assets/ is unreachable */
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; color: #1f2430; }
     .adm-guard { display: none; margin: 12px 16px; padding: 14px 16px; border: 1px solid #d6dbe4; border-left: 4px solid #0b64c4; border-radius: 6px; background: #fff; font-size: 14px; line-height: 1.55; }
     .adm-guard.show { display: block; }
@@ -26,8 +26,8 @@
       } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
     })();
   </script>
-  <link rel="stylesheet" href="../assets/ui.css" />
-  <link rel="stylesheet" href="admin.css" />
+  <link rel="stylesheet" href="assets/ui.css" />
+  <link rel="stylesheet" href="assets/admin.css" />
 </head>
 <body>
   <div class="adm-modal" id="fbModal" hidden role="dialog" aria-modal="true" aria-labelledby="fbTitle">
@@ -73,30 +73,32 @@
     <b>The panel's stylesheet and scripts did not load.</b>
     <span id="guardWhy"></span>
     <ul>
-      <li>Run a server in the <b>project root</b> (the folder that holds <code>assets/</code>): <code>python3 -m http.server 5173</code></li>
-      <li>then open <code>http://localhost:5173/admin/</code></li>
-      <li>GitHub <code>raw.</code> links and in-app file previews refuse linked CSS/JS, and copying only <code>admin/</code> breaks the <code>../assets/</code> paths.</li>
+      <li>Run a server inside this folder (the one that holds <code>index.html</code> and <code>assets/</code>): <code>python3 -m http.server 5173</code></li>
+      <li>then open <code>http://localhost:5173/</code> — or <code>/admin-panel/</code> if you served the repository root</li>
+      <li>GitHub <code>raw.</code> links and in-app file previews refuse linked CSS/JS. This folder is self-contained: it can be served or deployed on its own, as long as <code>assets/</code> stays next to <code>index.html</code>.</li>
     </ul>
   </div>
   <div class="adm">
 
     <header class="adm-top">
-      <a class="adm-brand" href="../index.html">
-        <img class="logo-img" src="../assets/logo.png" alt="" width="30" height="30" />
+      <a class="adm-brand" href="../user-panel/index.html">
+        <img class="logo-img" src="assets/logo.png" alt="" width="30" height="30" />
         <span><b>Terox Chat</b><em>Admin panel</em></span>
       </a>
 
-      <div class="adm-meters">
-        <span class="meter"><i id="mUsers">0</i> users</span>
-        <span class="meter"><i id="mUsed">0</i> / <i id="mPool">0</i> images used</span>
+      <div class="adm-strip">
+        <div class="adm-meters">
+          <span class="meter"><i id="mUsers">0</i> users</span>
+          <span class="meter"><i id="mUsed">0</i> / <i id="mPool">0</i> images used</span>
+        </div>
+        <div class="adm-cloud">
+          <button class="chip" id="fbChip" type="button" aria-label="Firebase connection settings">
+            <span class="dot"></span><span id="fbChipText">this device only</span>
+          </button>
+          <button class="btn ghost sm" id="fbAuthBtn" type="button" hidden>Sign in</button>
+        </div>
       </div>
 
-      <div class="adm-cloud">
-        <button class="chip" id="fbChip" type="button" aria-label="Firebase connection settings">
-          <span class="dot"></span><span id="fbChipText">this device only</span>
-        </button>
-        <button class="btn ghost sm" id="fbAuthBtn" type="button" hidden>Sign in</button>
-      </div>
       <div class="appbar-actions">
         <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -207,7 +209,7 @@
   </div>
 
   <script>
-    /* three sentinel checks — the token file (../assets/ui.css), this folder's
+    /* three sentinel checks — the token file (assets/ui.css), this folder's
        admin.css, and the roster script. If any of them cannot load (raw.github links,
        a copied admin/ folder, a sandboxed preview pane) say so instead of going naked. */
     setTimeout(function () {
@@ -217,7 +219,7 @@
       var rows = document.querySelectorAll(".u-line").length;
       if (tokens && styled && rows) return;
       var why = [];
-      if (!tokens) why.push("the shared stylesheet ../assets/ui.css did not load, so there are no design tokens");
+      if (!tokens) why.push("the shared stylesheet assets/ui.css did not load, so there are no design tokens");
       else if (!styled) why.push("admin.css was not applied");
       if (!rows && !document.querySelector("script[src*='admin.js']")) why.push("admin.js is missing");
       else if (!rows) why.push("admin.js did not run, so the roster is empty");
@@ -225,9 +227,9 @@
       document.getElementById("cssGuard").className = "adm-guard show";
     }, 900);
   </script>
-  <script src="../assets/firebase.js"></script>
-  <script src="../assets/store.js"></script>
-  <script src="../assets/ui.js"></script>
-  <script src="admin.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/store.js"></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/admin.js"></script>
 </body>
 </html>
