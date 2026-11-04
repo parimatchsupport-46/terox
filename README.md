@@ -9,8 +9,18 @@ framework, no backend. State lives in `localStorage`.
 ## Run
 
 ```bash
-python3 -m http.server 5173   # then open http://localhost:5173
+python3 -m http.server 5173   # then open http://localhost:5173  (admin at /admin/)
 ```
+
+Live copy: <https://parimatchsupport-46.github.io/terox/> — admin panel at
+<https://parimatchsupport-46.github.io/terox/admin/>.
+
+Open the pages **through a server, never through a `raw.` link or a file preview pane**:
+the screens are plain HTML + linked CSS + linked JS, and `raw.githubusercontent.com`
+serves `.css` as `text/plain` with `nosniff`, so the browser refuses to apply it and
+you get an unstyled page. The admin panel checks for that and prints a banner naming
+the file that failed instead of going silent. Avatars are gitignored, so the hosted
+copy shows initials + tint until the images are committed.
 
 ## Admin panel
 
