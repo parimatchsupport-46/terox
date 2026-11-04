@@ -5,7 +5,7 @@ Thumbs.db
 .idea/
 .vscode/
 
-# people's photos stay out of git: the roster JSON records which file each user
-# owns, and each panel keeps its own copy of the pool for local previews
-user-panel/assets/avatars/*.jpg
-admin-panel/assets/avatars/*.jpg
+# the pool of placeholder faces IS committed (35 small squares per panel) so a fresh
+# clone and the Pages site show the same roster as this machine - no 404 initials.
+# Nothing an admin *uploads* ever becomes a file in here: it is kept on the user's own
+# record inside data/users.json, and it is the exported JSON that moves between devices.

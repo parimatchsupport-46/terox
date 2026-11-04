@@ -49,9 +49,9 @@ blue bubble, and each folder ships `logo.png` plus 32/64 px variants of its own 
 
 - A user is created from **name, username, bio**, and the admin **uploads the profile
   image as a file** — there is no URL field anywhere. The file is dropped on the panel,
-  centre-cropped to a 360px square, re-encoded at ~15 KB and stored as that user's own
-  object at `avatars/<username>.jpg`. JPG, PNG and WebP only, 8 MB cap, anything else is
-  refused with a reason.
+  centre-cropped to a 360px square, re-encoded at ~15 KB and kept on that user's own
+  record, so the picture travels inside `data/users.json` wherever the roster goes.
+  JPG, PNG and WebP only, 8 MB cap, anything else is refused with a reason.
 - If the admin does not upload, `assets/avatars/` still works as a pool
   (`data/avatars.json` is the manifest): each new user takes the first image nobody has
   yet, so one image belongs to exactly one user, and deleting a user returns theirs.
@@ -61,8 +61,8 @@ blue bubble, and each folder ships `logo.png` plus 32/64 px variants of its own 
   appears on the home list in that browser immediately. **View** on a row opens that
   user's profile in the user panel — on the Pages site that is the sibling folder; when
   the panel is deployed on its own, set `window.TEROX_APP_BASE` to the user panel's URL.
-- The people photos are gitignored, so a fresh clone shows initials + tint until
-  `assets/avatars/*.jpg` is put in place.
+- The 35-face pool in `assets/avatars/` is committed, so a fresh clone and the Pages site
+  show the same faces as this machine; only the initials fallback needs no file at all.
 
 ## No backend — and that is the whole design
 
@@ -184,7 +184,7 @@ user-panel/assets/store.js       the roster + chats + prefs, all on-device
 user-panel/assets/auth.js        the account gate: register, sign in, auto-login
 user-panel/assets/login.js       that screen's form
 user-panel/assets/{home,chat,profile,user}.js
-user-panel/assets/avatars/       the image pool — gitignored
+user-panel/assets/avatars/       the image pool — 35 squares, committed
 user-panel/data/{users,avatars}.json
 
 admin-panel/index.html           one screen: roster, form, dialogs
