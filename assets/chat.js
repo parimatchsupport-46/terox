@@ -32,6 +32,7 @@
     el.peerName = q("peerName");
     el.peerStatus = q("peerStatus");
     el.peerAvatar = q("peerAvatar");
+    el.peerProfile = q("peerProfile");
     el.typing = q("typingBar");
     el.typingWho = q("typingWho");
     el.input = q("input");
@@ -61,8 +62,8 @@
     var p = user;
     el.peerName.textContent = p.name;
     el.peerStatus.textContent = "Online";
-    el.peerAvatar.className = "avatar s40 t-" + p.tint;
-    el.peerAvatar.textContent = Store.initials(p.name);
+    el.peerAvatar.innerHTML = UI.avatarHTML(p, 40, true);
+    el.peerProfile.href = "user.html?u=" + encodeURIComponent(p.id);
     document.title = p.name + " · Terox Chat";
     Store.markRead(uid);
     render();
@@ -104,9 +105,9 @@
 
     if (!mine) {
       var av = document.createElement("span");
-      av.className = "av avatar t-" + user.tint;
-      av.textContent = Store.initials(user.name);
+      av.className = "av";
       av.setAttribute("aria-hidden", "true");
+      av.innerHTML = UI.avatarHTML(user, 36, false);
       wrap.appendChild(av);
     }
 

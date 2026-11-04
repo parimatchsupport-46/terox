@@ -9,24 +9,25 @@
 .listbar .hint span { font-size: 13px; color: var(--muted); }
 
 .ulist { padding: 4px 0 calc(20px + env(safe-area-inset-bottom, 0px)); }
+/* two links inside one row: the face opens the profile, the rest opens the chat */
 .urow {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-  gap: 12px;
+  display: flex;
   align-items: center;
+  gap: 12px;
   width: 100%;
   padding: 10px 14px;
-  background: transparent;
-  border: none;
   border-bottom: 1px solid var(--border);
-  text-align: left;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
   transition: background 0.15s;
 }
-.urow:active { background: var(--bg); }
-.urow .mid { min-width: 0; }
+.urow .face,
+.urow .main { text-decoration: none; color: inherit; display: block; }
+.urow .face { flex: none; border-radius: 999px; }
+.urow .main { flex: 1; min-width: 0; padding: 6px 0; border-radius: var(--radius); }
+.urow .face:active,
+.urow .main:active,
+.urow.unread:active { background: var(--bg); }
+.urow .face:focus-visible,
+.urow .main:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .urow .n { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; }
 .urow .n b { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .urow .n time { font-size: 12px; color: var(--muted); flex: none; }
@@ -37,7 +38,30 @@
 .urow .p .st .dot-status { width: 7px; height: 7px; }
 .empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px; }
 
+/* ---------- VIEW PROFILE (user.html) ---------- */
+.bio { font-size: 15px; line-height: 1.5; color: var(--text); margin-top: 4px; }
+.kv { margin: 14px 0 0; display: grid; gap: 8px; }
+.kv > div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.kv dt { color: var(--muted); flex: none; }
+.kv dd { margin: 0; text-align: right; overflow-wrap: anywhere; color: var(--text); }
+.phero .avatar { font-size: 32px; }
+
 /* ---------- CHAT ---------- */
+.peer-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+}
+.peer-link:active { opacity: 0.7; }
+.peer-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.appbar .peer-link .titles { flex: 1; min-width: 0; }
+
 .thread {
   flex: 1;
   min-height: 0;

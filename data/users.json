@@ -1,0 +1,74 @@
+[
+  {
+    "id": "meera",
+    "name": "Meera Iyer",
+    "username": "meeraiyer",
+    "bio": "Frontend Lead. Ships the CSS, breaks the build, fixes the build.",
+    "photo": "a01.jpg",
+    "tint": "yes",
+    "role": "Frontend Lead"
+  },
+  {
+    "id": "aarav",
+    "name": "Aarav Sharma",
+    "username": "aarav",
+    "bio": "Product Designer. Radius 6px or nothing.",
+    "photo": null,
+    "tint": "accent",
+    "role": "Product Designer"
+  },
+  {
+    "id": "kabir",
+    "name": "Kabir Nanda",
+    "username": "kabirn",
+    "bio": "Backend. Patch bhej raha hoon, review kar lena.",
+    "photo": null,
+    "tint": "warn",
+    "role": "Backend"
+  },
+  {
+    "id": "zoya",
+    "name": "Zoya Khan",
+    "username": "zoyak",
+    "bio": "QA. Zoom lock, tap targets, dark mode — sab test kiya.",
+    "photo": "a02.jpg",
+    "tint": "no",
+    "role": "QA"
+  },
+  {
+    "id": "nafisa",
+    "name": "Nafisa Rahman",
+    "username": "nafisa",
+    "bio": "Marketing. Launch copy ready hai.",
+    "photo": "a03.jpg",
+    "tint": "accent",
+    "role": "Marketing"
+  },
+  {
+    "id": "dev",
+    "name": "Dev Rajput",
+    "username": "devr",
+    "bio": "Android. Side se koi issue nahi aaya.",
+    "photo": null,
+    "tint": "yes",
+    "role": "Android"
+  },
+  {
+    "id": "priya",
+    "name": "Priya Menon",
+    "username": "priyam",
+    "bio": "Data. Dashboard numbers calibrate ho gaye.",
+    "photo": "a04.jpg",
+    "tint": "warn",
+    "role": "Data"
+  },
+  {
+    "id": "harsh",
+    "name": "Harsh Vardhan",
+    "username": "harshv",
+    "bio": "Support. 2 tickets pending hain, kal dekh lena.",
+    "photo": null,
+    "tint": "no",
+    "role": "Support"
+  }
+]

@@ -4,3 +4,6 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+
+# people photos stay local: the roster JSON is committed, the images are not
+assets/avatars/*.jpg

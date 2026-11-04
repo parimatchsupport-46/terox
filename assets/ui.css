@@ -224,9 +224,29 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
 .avatar.t-warn { background: rgba(147, 187, 240, 0.30); border-color: transparent; }
 [data-theme="dark"] .avatar.t-accent, [data-theme="dark"] .avatar.t-no { background: rgba(30, 144, 255, 0.16); }
 [data-theme="dark"] .avatar.t-yes, [data-theme="dark"] .avatar.t-warn { background: rgba(30, 144, 255, 0.26); }
+.avatar.s44 { width: 44px; height: 44px; font-size: 15px; }
 .avatar.s40 { width: 40px; height: 40px; font-size: 14px; }
 .avatar.s48 { width: 48px; height: 48px; font-size: 16px; }
 .avatar.s72 { width: 72px; height: 72px; font-size: 24px; }
+/* photo avatars: the img sits over the initials, which stay as the fallback */
+.av-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  z-index: 1;
+  background: var(--bg);
+}
+.avatar .live { z-index: 2; }
+.avatar.no-photo { font-size: inherit; }
+.avatar.no-photo { color: var(--accent); }
+.avatar.s28 { width: 28px; height: 28px; font-size: 11px; }
+.avatar.s36 { width: 36px; height: 36px; font-size: 13px; }
+.avatar.s96 { width: 96px; height: 96px; font-size: 32px; }
+.avatar.s120 { width: 120px; height: 120px; font-size: 38px; }
+
 .avatar .live {
   position: absolute;
   right: -1px; bottom: -1px;

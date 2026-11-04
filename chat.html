@@ -28,11 +28,13 @@
       <a class="icon-btn" href="index.html" aria-label="Back to all users">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
       </a>
-      <span class="avatar s40 t-accent" id="peerAvatar">?</span>
-      <div class="titles">
-        <b id="peerName">Loading…</b>
-        <span><span class="dot-status online"></span> <span id="peerStatus">Online</span></span>
-      </div>
+      <a class="peer-link" id="peerProfile" href="user.html" aria-label="View this profile">
+        <span class="avatar s40 t-accent" id="peerAvatar"><span>?</span></span>
+        <span class="titles">
+          <b id="peerName">Loading…</b>
+          <span><span class="dot-status online"></span> <span id="peerStatus">Online</span></span>
+        </span>
+      </a>
       <div class="appbar-actions">
         <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>

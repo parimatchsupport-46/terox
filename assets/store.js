@@ -5,19 +5,93 @@
 (function (global) {
   "use strict";
 
-  var KEY = { chats: "terox.chats.v1", profile: "terox.profile.v1", prefs: "terox.prefs.v1" };
+  var KEY = {
+    chats: "terox.chats.v1", profile: "terox.profile.v1", prefs: "terox.prefs.v1",
+    users: "terox.users.v1"
+  };
 
-  /* every contact is online — product rule */
-  var USERS = [
-    { id: "meera", name: "Meera Iyer", role: "Frontend Lead", tint: "yes" },
-    { id: "aarav", name: "Aarav Sharma", role: "Product Designer", tint: "accent" },
-    { id: "kabir", name: "Kabir Nanda", role: "Backend", tint: "warn" },
-    { id: "zoya", name: "Zoya Khan", role: "QA", tint: "no" },
-    { id: "nafisa", name: "Nafisa Rahman", role: "Marketing", tint: "accent" },
-    { id: "dev", name: "Dev Rajput", role: "Android", tint: "yes" },
-    { id: "priya", name: "Priya Menon", role: "Data", tint: "warn" },
-    { id: "harsh", name: "Harsh Vardhan", role: "Support", tint: "no" }
+  /* avatar pool: the images in assets/avatars, one per user, never reused */
+  var AVATARS = ["a01.jpg", "a02.jpg", "a03.jpg", "a04.jpg", "a05.jpg", "a06.jpg", "a07.jpg", "a08.jpg", "a09.jpg", "a10.jpg", "a11.jpg", "a12.jpg", "a13.jpg", "a14.jpg", "a15.jpg", "a16.jpg", "a17.jpg", "a18.jpg", "a19.jpg", "a20.jpg", "a21.jpg", "a22.jpg", "a23.jpg", "a24.jpg", "a25.jpg", "a26.jpg", "a27.jpg", "a28.jpg", "a29.jpg", "a30.jpg", "a31.jpg", "a32.jpg", "a33.jpg", "a34.jpg", "a35.jpg"];
+  var AVATAR_DIR = "assets/avatars/";
+
+  /* the roster. Seeded from data/users.json, then owned by the admin panel
+     (localStorage terox.users.v1). Every contact is online — product rule. */
+  var SEED_USERS = [
+      {
+          "id": "meera",
+          "name": "Meera Iyer",
+          "username": "meeraiyer",
+          "bio": "Frontend Lead. Ships the CSS, breaks the build, fixes the build.",
+          "photo": "a01.jpg",
+          "tint": "yes",
+          "role": "Frontend Lead"
+      },
+      {
+          "id": "aarav",
+          "name": "Aarav Sharma",
+          "username": "aarav",
+          "bio": "Product Designer. Radius 6px or nothing.",
+          "photo": null,
+          "tint": "accent",
+          "role": "Product Designer"
+      },
+      {
+          "id": "kabir",
+          "name": "Kabir Nanda",
+          "username": "kabirn",
+          "bio": "Backend. Patch bhej raha hoon, review kar lena.",
+          "photo": null,
+          "tint": "warn",
+          "role": "Backend"
+      },
+      {
+          "id": "zoya",
+          "name": "Zoya Khan",
+          "username": "zoyak",
+          "bio": "QA. Zoom lock, tap targets, dark mode — sab test kiya.",
+          "photo": "a02.jpg",
+          "tint": "no",
+          "role": "QA"
+      },
+      {
+          "id": "nafisa",
+          "name": "Nafisa Rahman",
+          "username": "nafisa",
+          "bio": "Marketing. Launch copy ready hai.",
+          "photo": "a03.jpg",
+          "tint": "accent",
+          "role": "Marketing"
+      },
+      {
+          "id": "dev",
+          "name": "Dev Rajput",
+          "username": "devr",
+          "bio": "Android. Side se koi issue nahi aaya.",
+          "photo": null,
+          "tint": "yes",
+          "role": "Android"
+      },
+      {
+          "id": "priya",
+          "name": "Priya Menon",
+          "username": "priyam",
+          "bio": "Data. Dashboard numbers calibrate ho gaye.",
+          "photo": "a04.jpg",
+          "tint": "warn",
+          "role": "Data"
+      },
+      {
+          "id": "harsh",
+          "name": "Harsh Vardhan",
+          "username": "harshv",
+          "bio": "Support. 2 tickets pending hain, kal dekh lena.",
+          "photo": null,
+          "tint": "no",
+          "role": "Support"
+      }
   ];
+
+  var USERS = null;
 
   var PROFILE = {
     name: "Rohan Verma",
@@ -101,6 +175,92 @@
     } catch (e) {}
   }
 
+  /* ---------------- the roster (admin panel owns this) ---------------- */
+  function users() {
+    if (!USERS) {
+      var stored = read(KEY.users, null);
+      USERS = Array.isArray(stored) ? stored : SEED_USERS.map(function (u) { return u; });
+    }
+    return USERS;
+  }
+  function saveUsers(next) {
+    USERS = next;
+    write(KEY.users, next);
+    emit();
+    return next;
+  }
+  function usedPhotos(list) {
+    var seen = {};
+    (list || users()).forEach(function (u) { if (u.photo) seen[u.photo] = 1; });
+    return seen;
+  }
+  /* first image in the pool that no user has yet — "one image, one user" */
+  function freePhoto(list) {
+    var taken = usedPhotos(list);
+    for (var i = 0; i < AVATARS.length; i++) if (!taken[AVATARS[i]]) return AVATARS[i];
+    return null;
+  }
+  function freeCount() {
+    return AVATARS.length - Object.keys(usedPhotos()).length;
+  }
+  function resetUsers() {
+    USERS = SEED_USERS.map(function (u) { return u; });
+    write(KEY.users, USERS);
+    emit();
+    return USERS;
+  }
+
+  function photoSrc(u) {
+    return u && u.photo ? AVATAR_DIR + u.photo : null;
+  }
+  function slug(name) {
+    return String(name).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 20) || "user";
+  }
+  function uidFrom(name, list) {
+    var base = slug(name), id = base, n = 2;
+    var taken = {};
+    (list || users()).forEach(function (u) { taken[u.id] = 1; taken[u.username] = 1; });
+    while (taken[id]) { id = base + n; n += 1; }
+    return id;
+  }
+  function addUser(data) {
+    var list = users().slice();
+    var id = uidFrom(data.name, list);
+    var u = {
+      id: id,
+      name: String(data.name).trim(),
+      username: (data.username ? String(data.username).trim() : "@" + id).replace(/^@/, ""),
+      bio: String(data.bio || "").trim(),
+      photo: data.photo === undefined ? freePhoto(list) : data.photo,
+      tint: "accent",
+      role: String(data.role || "").trim()
+    };
+    list.push(u);
+    saveUsers(list);
+    return u;
+  }
+  function updateUser(id, patch) {
+    var list = users().map(function (u) {
+      if (u.id !== id) return u;
+      var next = {};
+      for (var k in u) next[k] = u[k];
+      for (var p in patch) next[p] = patch[p];
+      return next;
+    });
+    saveUsers(list);
+    return list.filter(function (u) { return u.id === id; })[0] || null;
+  }
+  function removeUser(id) {
+    var gone = null;
+    var list = users().filter(function (u) {
+      if (u.id !== id) return true;
+      gone = u;
+      return false;
+    });
+    saveUsers(list);
+    return gone;
+  }
+
   /* ---------------- threads ---------------- */
   function chats() {
     var stored = read(KEY.chats, null);
@@ -121,7 +281,7 @@
 
   function order() {
     var all = chats();
-    return USERS.slice().sort(function (a, b) {
+    return users().slice().sort(function (a, b) {
       return lastAt(all, b.id) - lastAt(all, a.id);
     });
   }
@@ -271,7 +431,7 @@
   }
 
   global.Store = {
-    USERS: USERS,
+    get USERS() { return users(); },
     chats: chats, thread: thread, order: order, last: last, lastAt: lastAt,
     unreadTotal: unreadTotal, markRead: markRead,
     append: append, receive: receive, edit: edit, remove: remove, restore: restore,
@@ -280,9 +440,14 @@
     profile: profile, saveProfile: saveProfile,
     prefs: prefs, savePref: savePref,
     initials: initials, time: time, dateLong: dateLong, dayStamp: dayStamp, rowStamp: rowStamp,
+    AVATARS: AVATARS,
+    users: users, saveUsers: saveUsers, addUser: addUser, updateUser: updateUser,
+    removeUser: removeUser, resetUsers: resetUsers, freePhoto: freePhoto, freeCount: freeCount,
+    usedPhotos: usedPhotos, photoSrc: photoSrc, slug: slug,
     user: function (id) {
-      for (var i = 0; i < USERS.length; i++) if (USERS[i].id === id) return USERS[i];
-      return { id: id, name: "Chat", role: "", tint: "accent" };
+      var list = users();
+      for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+      return { id: id, name: "Chat", username: "", bio: "", photo: null, role: "", tint: "accent" };
     }
   };
 })(window);

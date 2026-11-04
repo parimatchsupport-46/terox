@@ -1,31 +1,37 @@
 /* ==========================================================================
-   home.js — the user list. All users, all online, newest activity first.
+   home.js — the user list. Roster comes from the admin panel (Store.users),
+   every contact is online, newest activity first. Tapping the face opens that
+   profile, tapping the rest of the row opens the chat.
    ========================================================================== */
 (function () {
   "use strict";
 
   var filter = "";
 
+  function matches(u) {
+    if (!filter) return true;
+    var t = Store.last(Store.chats(), u.id);
+    var hay = [u.name, u.username, u.role, u.bio, t ? t.text : ""].join(" ").toLowerCase();
+    return hay.indexOf(filter.toLowerCase()) !== -1;
+  }
+
   function render() {
     var all = Store.chats();
     var list = document.getElementById("userList");
-    var ids = Store.USERS.map(function (u) { return u.id; });
+    var roster = Store.users();
 
-    var rows = Store.USERS.slice().sort(function (a, b) {
+    var rows = roster.slice().sort(function (a, b) {
       return Store.lastAt(all, b.id) - Store.lastAt(all, a.id);
-    }).filter(function (u) {
-      if (!filter) return true;
-      var t = Store.last(all, u.id);
-      var hay = (u.name + " " + u.role + " " + (t ? t.text : "")).toLowerCase();
-      return hay.indexOf(filter.toLowerCase()) !== -1;
-    });
+    }).filter(matches);
 
     var online = document.querySelector("[data-online]");
-    if (online) online.textContent = String(Store.USERS.length);
+    if (online) online.textContent = String(roster.length);
 
     list.innerHTML = "";
     if (!rows.length) {
-      list.innerHTML = '<p class="empty">Koi user nahi mila — "' + escapeHtml(filter) + '"</p>';
+      list.innerHTML = roster.length
+        ? '<p class="empty">Koi user nahi mila — "' + escapeHtml(filter) + '"</p>'
+        : '<p class="empty">Abhi koi user nahi. Admin panel se banaiye — <a href="admin/index.html">open admin</a>.</p>';
       return;
     }
 
@@ -33,30 +39,31 @@
       var last = Store.last(all, u.id);
       var unread = (all[u.id] && all[u.id].unread) || 0;
 
-      var a = document.createElement("a");
-      a.className = "urow" + (unread ? " unread" : "");
-      a.href = "chat.html?u=" + u.id;
-      a.dataset.uid = u.id;
-      a.setAttribute("role", "listitem");
-      a.innerHTML =
-        '<span class="avatar s48 t-' + u.tint + '">' + Store.initials(u.name) + '<span class="live"></span></span>' +
-        '<span class="mid">' +
+      var row = document.createElement("div");
+      row.className = "urow" + (unread ? " unread" : "");
+      row.dataset.uid = u.id;
+      row.setAttribute("role", "listitem");
+      row.innerHTML =
+        '<a class="face" href="user.html?u=' + encodeURIComponent(u.id) + '" aria-label="View profile: ' + escapeHtml(u.name) + '">' +
+          UI.avatarHTML(u, 48, true) +
+        "</a>" +
+        '<a class="main" href="chat.html?u=' + encodeURIComponent(u.id) + '">' +
           '<span class="n"><b></b><time></time></span>' +
           '<span class="p"><span class="pv"></span>' +
             (unread ? '<span class="badge-count">' + unread + "</span>" : '<span class="st"><span class="dot-status online"></span>Online</span>') +
           "</span>" +
-        "</span>";
+        "</a>";
 
-      a.querySelector(".n b").textContent = u.name;
-      a.querySelector("time").textContent = last ? Store.rowStamp(last.at) : "";
-      a.querySelector(".pv").textContent = last
+      row.querySelector(".n b").textContent = u.name;
+      row.querySelector("time").textContent = last ? Store.rowStamp(last.at) : "";
+      row.querySelector(".pv").textContent = last
         ? (last.from === "me" ? "You: " : "") + last.text
-        : u.role + " · tap to chat";
-      list.appendChild(a);
+        : (u.bio || u.role || "@" + u.username) + " · tap to chat";
+      list.appendChild(row);
     });
 
     /* keep ids referenced so future server data can swap in */
-    list.dataset.ids = ids.join(",");
+    list.dataset.ids = roster.map(function (u) { return u.id; }).join(",");
   }
 
   function escapeHtml(s) {

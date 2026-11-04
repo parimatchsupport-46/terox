@@ -168,8 +168,38 @@
     global.addEventListener("terox:change", hydrate);
   }
 
+  /* assets are referenced relative to this script, so the same markup works
+     from the app root (index/chat/profile/user) and from /admin/ */
+  var ASSET = (function () {
+    var el = document.currentScript || document.querySelector("script[src*='ui.js']");
+    var src = el && el.getAttribute("src") ? el.getAttribute("src") : "assets/ui.js";
+    return src.replace(/ui\.js$/, "");
+  })();
+
+  /* ---------------- avatars ----------------
+     One markup builder for every surface: a photo sits on top of the initials,
+     and if the image file is missing the <img> removes itself so the initials
+     (and the tint) stay visible. */
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function avatarHTML(u, size, withLive) {
+    u = u || {};
+    var src = u.photo ? ASSET + "avatars/" + u.photo : null;
+    var img = src
+      ? '<img class="av-img" src="' + esc(src) + '" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'no-photo\');this.remove()">'
+      : "";
+    return '<span class="avatar s' + size + " t-" + esc(u.tint || "accent") + '">' +
+      img + esc(global.Store ? global.Store.initials(u.name || "?") : "?") +
+      (withLive ? '<span class="live"></span>' : "") +
+      "</span>";
+  }
+
   global.UI = {
     setTheme: setTheme, toggleTheme: toggleTheme, toast: toast,
+    avatarHTML: avatarHTML, escapeHtml: esc,
     openDrawer: openDrawer, closeDrawer: closeDrawer, hydrate: hydrate
   };
 
