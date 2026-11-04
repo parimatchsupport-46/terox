@@ -334,7 +334,7 @@
     f.authBtn.textContent = "Sign in";
     f.lock.hidden = !(live && !in_);
     /* when the read itself is refused, say why - "connected" alone would be a lie */
-    var trouble = live ? FB.reason() : "";
+    var trouble = live && FB.reason ? FB.reason() : "";
     q("fbStateLine").textContent = st === "ready"
       ? "connected to " + (FB.config() || {}).projectId + (in_ ? " — signed in as " + FB.signedIn().email : " — read access only") +
         (trouble ? " · " + trouble : "")
