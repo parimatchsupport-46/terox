@@ -13,7 +13,7 @@
   --border: #e5e7eb;
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
-  --brand: #1e90ff;          /* the requested theme blue */
+  --brand: #1e90ff;          /* exactly the logo blue */
   --accent: #0b64c4;         /* deepened for light mode: carries white text at 5.8:1 */
   --accent-ink: #ffffff;
   --yes: #0b64c4;

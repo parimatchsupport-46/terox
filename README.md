@@ -54,7 +54,8 @@ One blue theme (`#1E90FF`) in both modes. `#1e90ff` with white text is only 3.2:
 deepens the accent to `#0b64c4` (white text 5.8:1) while dark mode fills with `#1e90ff` and a near-black
 ink `#041426` (5.7:1). Every surface that used the accent — own bubbles, send button, toggles, badges,
 avatar tints, focus rings, quote bar, jump flash, online label — derives from that same blue.
-Red stays reserved for destructive actions. The logo artwork is kept exactly as supplied.
+Red stays reserved for destructive actions. The logo mark itself is `#1e90ff` too, so artwork and
+UI read as one colour.
 
 Used: app bar + theme toggle · cards · buttons (yes/no) · badges · search bar ·
 toggle switch · loader dots (typing) · toast.
