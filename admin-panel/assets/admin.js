@@ -168,7 +168,8 @@
     });
   }
 
-  function render() { renderMeters(); renderList(); }
+  /* the cloud chip and the publish row report state too, so they refresh with the list */
+  function render() { renderMeters(); renderList(); renderCloud(); }
 
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
@@ -332,10 +333,21 @@
     f.authBtn.hidden = !live || in_;
     f.authBtn.textContent = "Sign in";
     f.lock.hidden = !(live && !in_);
+    /* when the read itself is refused, say why - "connected" alone would be a lie */
+    var trouble = live ? FB.reason() : "";
     q("fbStateLine").textContent = st === "ready"
-      ? "connected to " + (FB.config() || {}).projectId + (in_ ? " — signed in as " + FB.signedIn().email : " — read access only")
+      ? "connected to " + (FB.config() || {}).projectId + (in_ ? " — signed in as " + FB.signedIn().email : " — read access only") +
+        (trouble ? " · " + trouble : "")
       : st === "error" ? "error: " + FB.reason()
       : "not connected — the roster lives in this browser";
+    /* a connected-but-empty project is the one state where the roster is still
+       only on this device - say so, and offer to send it up */
+    var empty = live && Store.cloudEmpty();
+    q("fbPublishRow").hidden = !empty;
+    if (empty) {
+      q("fbPublishNote").textContent = "teroxUsers is empty, so the " + Store.users().length +
+        " users on this device have not been stored yet." + (in_ ? "" : " Sign in first — the rules refuse anonymous writes.");
+    }
   }
 
   function wireCloud() {
@@ -363,6 +375,16 @@
       a.download = "firebase-config.js";
       document.body.appendChild(a); a.click(); a.remove();
       UI.toast("drop it at assets/firebase-config.js and commit", "ok");
+    });
+    q("fbPublish").addEventListener("click", function () {
+      var btn = q("fbPublish");
+      btn.disabled = true;
+      Store.publishRoster().then(function (n) {
+        UI.toast(n + " users sent to Firestore — the roster is shared now", "ok");
+        renderCloud();
+      }, function (e) {
+        UI.toast(e.message || "Firestore refused the write", "bad");
+      }).then(function () { btn.disabled = false; });
     });
     q("fbOff").addEventListener("click", function () { FB.clearConfig(); q("fbModal").hidden = true; renderCloud(); UI.toast("back to this device only", "ok"); });
     f.authBtn.addEventListener("click", function () { q("authModal").hidden = false; q("authEmail").focus(); });

@@ -1,12 +1,14 @@
-/* Fill these from the Firebase console (Project settings -> Your apps -> SDK setup)
-   and the roster moves to Firestore + uploaded images to Storage.
-   Leaving them empty keeps everything on this device, which is fine.
-   The admin panel can also save a config for this browser without touching this file. */
+/* The web config of the real project (terox-chat), from the Firebase console.
+   A web config is public by design - what protects the data is the security
+   rules in the console, not this file. Both panels keep an identical copy
+   because each folder is deployed on its own.
+   The admin panel can also save a different config for one browser without
+   touching this file; an empty placeholder here never overrides that. */
 window.TEROX_FIREBASE = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyDC4LHwTGhLMF0ldHjOHAkglWhvk43Ek9M",
+  authDomain: "terox-chat.firebaseapp.com",
+  projectId: "terox-chat",
+  storageBucket: "terox-chat.firebasestorage.app",
+  messagingSenderId: "657285047009",
+  appId: "1:657285047009:web:e7b77af926dfab08070da0"
 };

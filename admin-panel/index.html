@@ -37,6 +37,10 @@
         <button class="icon-btn" id="fbClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <p class="hint" id="fbStateLine">not connected — the roster lives in this browser</p>
+      <div class="adm-publish" id="fbPublishRow" hidden>
+        <p class="hint" id="fbPublishNote"></p>
+        <button class="btn ghost sm" type="button" id="fbPublish">Send this device's roster up</button>
+      </div>
       <div class="field">
         <label for="fbSnippet">Paste the web config from the Firebase console</label>
         <textarea class="textarea" id="fbSnippet" rows="7" spellcheck="false" placeholder='const firebaseConfig = {&#10;  apiKey: "AIza…",&#10;  authDomain: "you.firebaseapp.com",&#10;  projectId: "you",&#10;  storageBucket: "you.appspot.com"&#10;};'></textarea>
@@ -82,7 +86,7 @@
 
     <header class="adm-top">
       <a class="adm-brand" href="../user-panel/index.html">
-        <img class="logo-img" src="assets/logo.png" alt="" width="30" height="30" />
+        <img class="logo-img" src="assets/logo.png" alt="Terox Chat admin" width="32" height="32" />
         <span><b>Terox Chat</b><em>Admin panel</em></span>
       </a>
 

@@ -281,21 +281,47 @@
      Firestore and every write is mirrored there; until then (or if the config
      is empty) this file is the only source and nothing else changes. */
   var cloud = null;
+  var cloudEmpty = false;   /* Firestore answered, but teroxUsers holds nobody yet */
   function cloudOn() { return cloud === "ready"; }
+  function adopt(list) { USERS = list; write(KEY.users, list); emit(); }
   function syncCloud() {
     if (!global.FB || cloud === "on" || cloud === "ready") return;
     cloud = "on";
     global.FB.on(function (state, why, user) {
-      if (state !== "ready") { cloud = state === "connecting" ? "on" : "off"; return; }
+      if (state !== "ready") { cloud = state === "connecting" ? "on" : "off"; cloudEmpty = false; return; }
       cloud = "ready";
       global.FB.loadRoster().then(function (rows) {
-        if (rows && rows.length) { USERS = rows; write(KEY.users, rows); emit(); }
-        global.FB.watchRoster(function (live) {
-          USERS = live; write(KEY.users, live); emit();
+        if (rows && rows.length) { adopt(rows); cloudEmpty = false; }
+        else if (rows) { cloudEmpty = users().length > 0; emit(); }
+        else { cloudEmpty = false; }   /* null: no answer from the server, say nothing */
+        global.FB.watchRoster(function (live, meta) {
+          /* an empty cache snapshot proves nothing */
+          if (meta && meta.fromCache && (!live || !live.length)) return;
+          /* an empty collection is what a brand-new project looks like before the
+             first publish - it must never delete a roster that already exists */
+          if ((!live || !live.length) && users().length) { cloudEmpty = true; emit(); return; }
+          adopt(live || []);
+          cloudEmpty = !live || !live.length;
         });
       }).catch(function () {
         /* the rules can refuse a read before anyone signs in: the local list stands */
       });
+    });
+  }
+  /* once, from the admin panel: send this device's roster up so the project is
+     not born empty. Writes are refused unless the admin is signed in. */
+  function publishRoster() {
+    if (!global.FB || global.FB.state() !== "ready") return Promise.reject(new Error("Firebase is not connected yet"));
+    var list = users();
+    if (!list.length) return Promise.reject(new Error("nothing on this device to send"));
+    var sent = 0;
+    return list.reduce(function (p, u) {
+      return p.then(function () { return global.FB.putUser(u).then(function (done) { if (done) sent += 1; }); });
+    }, Promise.resolve()).then(function () {
+      if (!sent) throw new Error("Firestore refused every write - sign in as the admin first");
+      cloudEmpty = false;
+      emit();
+      return sent;
     });
   }
 
@@ -472,6 +498,8 @@
 
   global.Store = {
     cloudState: function () { return cloud === "ready" ? "ready" : (global.FB ? global.FB.state() : "off"); },
+    cloudEmpty: function () { return cloudEmpty; },
+    publishRoster: publishRoster,
     get USERS() { return users(); },
     chats: chats, thread: thread, order: order, last: last, lastAt: lastAt,
     unreadTotal: unreadTotal, markRead: markRead,

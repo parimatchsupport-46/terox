@@ -44,6 +44,9 @@ content capped at 1240px and centred. Below 940px it collapses to one column and
 becomes a bottom sheet. Pinch zoom stays on here (unlike the chat screens) and every
 control keeps a 44px touch target.
 
+The bar carries its own mark — the desk-and-gear artwork — while the chat app keeps the
+blue bubble, and each folder ships `logo.png` plus 32/64 px variants of its own art.
+
 - A user is created from **name, username, bio**, and the admin **uploads the profile
   image as a file** — there is no URL field anywhere. The file is dropped on the panel,
   centre-cropped to a 360px square, re-encoded at ~15 KB and stored as that user's own
@@ -61,11 +64,11 @@ control keeps a 44px touch target.
 - The people photos are gitignored, so a fresh clone shows initials + tint until
   `assets/avatars/*.jpg` is put in place.
 
-## Firebase (optional, and what makes it multi-device)
+## Firebase — the project is `terox-chat`
 
-`assets/firebase.js` is the whole cloud layer. **With no config, nothing changes** — the
-roster and any uploaded image stay in this browser's `localStorage`, which is how the
-repo runs today. Fill in a web config and the same screens switch over:
+`assets/firebase.js` is the whole cloud layer and **both panels already ship the web config
+for your `terox-chat` project**, so there is nothing to paste. `localStorage` stays as the
+cache and the offline fallback: the app never needs Firebase to run.
 
 | What | Where |
 | --- | --- |
@@ -73,52 +76,68 @@ repo runs today. Fill in a web config and the same screens switch over:
 | Profile images | Firebase Storage under `avatars/`, the download URL is saved on the user as `photoURL` |
 | Who may write | Firebase Authentication (Email/Password) — the admin signs in from the panel |
 
-Two ways to give it the config, both fine:
+What each state means in the panel's chip:
 
-1. **In the panel** — tap the status chip (`this device only`) → paste the `firebaseConfig`
-   object → *Connect in this browser*. Use *Download assets/firebase-config.js* to turn that
-   into the file for everyone else.
-2. **In the repo** — fill `admin-panel/assets/firebase-config.js` (it ships with empty
-   strings), then copy the same file to `user-panel/assets/firebase-config.js`, since each
-   folder carries its own copy. A filled file wins; an empty one is ignored, so the panel's
-   own saved config still works.
+- `this device only` — no config found (only possible if you delete `firebase-config.js`
+  contents); the panel keeps working on the device.
+- `Firestore · sign in to write` — connected, but the current rules refuse the write path.
+- `device only (Firebase unreachable)` — the SDK could not load or the project could not be
+  reached; the roster on the device is used, nothing is lost.
 
-Firebase console: create a project → add a Web app → enable **Firestore** (production mode),
-**Storage** and **Authentication → Email/Password**, then create the admin user. The web
-config is not a secret, but these rules are what actually protect it — paste them in
-*Firestore rules* / *Storage rules*:
+An empty collection and an unreadable collection are kept apart on purpose: the roster read
+asks the server and ignores `fromCache` snapshots, so **a Firestore you cannot reach never
+deletes a roster**, while a Firestore that answers "nobody here yet" shows
+`teroxUsers is empty, so the N users on this device have not been stored yet` with one button
+— **Send this device's roster up** — that writes them once. Use it right after you create the
+admin user, then every later change syncs by itself.
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /teroxUsers/{id} {
-      allow read: if true;                      // the chat app is public
-      allow write: if request.auth != null
-        && request.auth.token.email == 'you@example.com';   // only the admin signs writes
-    }
-  }
-}
+### Three things still to click in the Firebase console
 
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /avatars/{file} {
-      allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email == 'you@example.com'
-        && request.resource.size < 2 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null
-        && request.auth.token.email == 'you@example.com';
-    }
-  }
-}
-```
+Checked against your project just now: an anonymous read of `teroxUsers` answers
+`403 PERMISSION_DENIED` (so nobody can read or write it yet), and Email/Password sign-in
+answers `CONFIGURATION_NOT_FOUND` (the provider is off). So:
 
-With those rules the panel shows `Firestore · sign in to write` until you sign in; the
-chat side never needs to. If Firebase cannot be reached (no config, offline, blocked CDN)
-the panel says so in that same chip and keeps working on the device.
+1. **Authentication → Sign-in method → Email/Password → Enable**, then *Users → Add user*
+   with the admin email and password. Sign in from the panel's chip → *Sign in*.
+2. **Firestore → Rules**, paste this (it makes the roster public-read, admin-write):
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /teroxUsers/{id} {
+         allow read: if true;                                    // the chat app is public
+         allow write: if request.auth != null
+           && request.auth.token.email == 'you@example.com';     // your admin email
+       }
+     }
+   }
+   ```
+3. **Storage → Rules** (and *Get started* if the bucket has never been created — the panel
+   uploads to `terox-chat.firebasestorage.app`):
+
+   ```
+   rules_version = '2';
+   service firebase.storage {
+     match /b/{bucket}/o {
+       match /avatars/{file} {
+         allow read: if true;
+         allow write: if request.auth != null
+           && request.auth.token.email == 'you@example.com'
+           && request.resource.size < 2 * 1024 * 1024
+           && request.resource.contentType.matches('image/.*');
+         allow delete: if request.auth != null
+           && request.auth.token.email == 'you@example.com';
+       }
+     }
+   }
+   ```
+
+A web config is not a secret — anyone using the app has it in their browser. The rules above
+are what protect the data, so they are the part worth setting before you share the URL.
+`admin-panel/assets/firebase-config.js` and `user-panel/assets/firebase-config.js` must stay
+identical (the suite checks it); the connection dialog can also keep a different config for
+one browser, and that wins over an empty file.
 
 ## Vercel
 
@@ -180,8 +199,9 @@ One blue theme (`#1E90FF`) in both modes. `#1e90ff` with white text is only 3.2:
 deepens the accent to `#0b64c4` (white text 5.8:1) while dark mode fills with `#1e90ff` and a near-black
 ink `#041426` (5.7:1). Every surface that used the accent — own bubbles, send button, toggles, badges,
 avatar tints, focus rings, quote bar, jump flash, online label — derives from that same blue.
-Red stays reserved for destructive actions. The logo mark itself is `#1e90ff` too, so artwork and
-UI read as one colour.
+Red stays reserved for destructive actions. The app's mark is `#1e90ff` too, so artwork and UI
+read as one colour; the admin panel carries its own illustration, shown at its real 512px detail
+and never cropped to a circle.
 
 Used: app bar + theme toggle · cards · buttons (yes/no) · badges · search bar ·
 toggle switch · loader dots (typing) · toast.

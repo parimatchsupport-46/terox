@@ -205,10 +205,17 @@
     u.id = u.id || d.id;
     return u;
   }
+  /* resolves null when the server could not be reached, [] when it is empty */
   function loadRoster() {
     if (state !== "ready") return Promise.resolve(null);
     var col = mods.firestore.collection(db, ROSTER);
-    return mods.firestore.getDocs(mods.firestore.query(col, mods.firestore.limit(200))).then(function (snap) {
+    /* source:"server" on purpose: with the default behaviour an unreachable
+       project answers from the empty local cache, and "nothing stored yet" would
+       be indistinguishable from "cannot be read right now" */
+    return mods.firestore.getDocs(mods.firestore.query(col, mods.firestore.limit(200)), { source: "server" }).then(function (snap) {
+      /* a snapshot served from the offline cache is not an answer: "could not reach
+         Firestore" must never be mistaken for "the collection has nobody in it" */
+      if (snap.metadata && snap.metadata.fromCache) return null;
       return snap.docs.map(rowToUser).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
     });
   }
@@ -216,7 +223,7 @@
     if (state !== "ready") return function () {};
     var col = mods.firestore.collection(db, ROSTER);
     return mods.firestore.onSnapshot(col, function (snap) {
-      cb(snap.docs.map(rowToUser).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); }));
+      cb(snap.docs.map(rowToUser).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); }), snap.metadata);
     }, function (e) { why = "roster read failed: " + e.message; fire(); });
   }
   function putUser(u) {
