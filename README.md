@@ -55,6 +55,8 @@ blue bubble, and each folder ships `logo.png` plus 32/64 px variants of its own 
 - If the admin does not upload, `assets/avatars/` still works as a pool
   (`data/avatars.json` is the manifest): each new user takes the first image nobody has
   yet, so one image belongs to exactly one user, and deleting a user returns theirs.
+  The shipped roster is one account per image — all 35 faces are claimed, so the pool only
+  has something to hand out again once a user is deleted or someone reassigns a file.
 - Create, edit, delete (with Undo), search, and Export / Import of
   `data/users.json` for shipping the roster.
 - The panel writes to the same store the chat reads (`terox.users.v1`), so a created user

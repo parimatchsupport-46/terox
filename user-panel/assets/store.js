@@ -16,80 +16,323 @@
 
   /* the roster. Seeded from data/users.json, then owned by the admin panel
      (localStorage terox.users.v1). Every contact is online — product rule. */
-  var SEED_USERS = [
+  var SEED_USERS =     [
       {
-          "id": "meera",
-          "name": "Meera Iyer",
-          "username": "meeraiyer",
-          "bio": "Frontend Lead. Ships the CSS, breaks the build, fixes the build.",
-          "photo": "a01.jpg",
-          "tint": "yes",
-          "role": "Frontend Lead"
+        "id": "meera",
+        "name": "Meera Iyer",
+        "username": "meeraiyer",
+        "bio": "Frontend Lead. Ships the CSS, breaks the build, fixes the build.",
+        "photo": "a01.jpg",
+        "tint": "yes",
+        "role": "Frontend Lead"
       },
       {
-          "id": "aarav",
-          "name": "Aarav Sharma",
-          "username": "aarav",
-          "bio": "Product Designer. Radius 6px or nothing.",
-          "photo": null,
-          "tint": "accent",
-          "role": "Product Designer"
+        "id": "aarav",
+        "name": "Aarav Sharma",
+        "username": "aarav",
+        "bio": "Product Designer. Radius 6px or nothing.",
+        "photo": "a05.jpg",
+        "tint": "accent",
+        "role": "Product Designer"
       },
       {
-          "id": "kabir",
-          "name": "Kabir Nanda",
-          "username": "kabirn",
-          "bio": "Backend. Patch bhej raha hoon, review kar lena.",
-          "photo": null,
-          "tint": "warn",
-          "role": "Backend"
+        "id": "kabir",
+        "name": "Kabir Nanda",
+        "username": "kabirn",
+        "bio": "Backend. Patch bhej raha hoon, review kar lena.",
+        "photo": "a06.jpg",
+        "tint": "warn",
+        "role": "Backend"
       },
       {
-          "id": "zoya",
-          "name": "Zoya Khan",
-          "username": "zoyak",
-          "bio": "QA. Zoom lock, tap targets, dark mode — sab test kiya.",
-          "photo": "a02.jpg",
-          "tint": "no",
-          "role": "QA"
+        "id": "zoya",
+        "name": "Zoya Khan",
+        "username": "zoyak",
+        "bio": "QA. Zoom lock, tap targets, dark mode \u2014 sab test kiya.",
+        "photo": "a02.jpg",
+        "tint": "no",
+        "role": "QA"
       },
       {
-          "id": "nafisa",
-          "name": "Nafisa Rahman",
-          "username": "nafisa",
-          "bio": "Marketing. Launch copy ready hai.",
-          "photo": "a03.jpg",
-          "tint": "accent",
-          "role": "Marketing"
+        "id": "nafisa",
+        "name": "Nafisa Rahman",
+        "username": "nafisa",
+        "bio": "Marketing. Launch copy ready hai.",
+        "photo": "a03.jpg",
+        "tint": "accent",
+        "role": "Marketing"
       },
       {
-          "id": "dev",
-          "name": "Dev Rajput",
-          "username": "devr",
-          "bio": "Android. Side se koi issue nahi aaya.",
-          "photo": null,
-          "tint": "yes",
-          "role": "Android"
+        "id": "dev",
+        "name": "Dev Rajput",
+        "username": "devr",
+        "bio": "Android. Side se koi issue nahi aaya.",
+        "photo": "a07.jpg",
+        "tint": "yes",
+        "role": "Android"
       },
       {
-          "id": "priya",
-          "name": "Priya Menon",
-          "username": "priyam",
-          "bio": "Data. Dashboard numbers calibrate ho gaye.",
-          "photo": "a04.jpg",
-          "tint": "warn",
-          "role": "Data"
+        "id": "priya",
+        "name": "Priya Menon",
+        "username": "priyam",
+        "bio": "Data. Dashboard numbers calibrate ho gaye.",
+        "photo": "a04.jpg",
+        "tint": "warn",
+        "role": "Data"
       },
       {
-          "id": "harsh",
-          "name": "Harsh Vardhan",
-          "username": "harshv",
-          "bio": "Support. 2 tickets pending hain, kal dekh lena.",
-          "photo": null,
-          "tint": "no",
-          "role": "Support"
+        "id": "harsh",
+        "name": "Harsh Vardhan",
+        "username": "harshv",
+        "bio": "Support. 2 tickets pending hain, kal dekh lena.",
+        "photo": "a08.jpg",
+        "tint": "no",
+        "role": "Support"
+      },
+      {
+        "id": "tanvid",
+        "name": "Tanvi Deshpande",
+        "username": "tanvid",
+        "bio": "QA. Report bhej diya, triage kar lena.",
+        "photo": "a09.jpg",
+        "tint": "accent",
+        "role": "QA"
+      },
+      {
+        "id": "rohitn",
+        "name": "Rohit Nair",
+        "username": "rohitn",
+        "bio": "Mobile. Android side se build green hai.",
+        "photo": "a10.jpg",
+        "tint": "yes",
+        "role": "Mobile"
+      },
+      {
+        "id": "snehap",
+        "name": "Sneha Pillai",
+        "username": "snehap",
+        "bio": "Content. Copy ready, tone soft kiya thoda.",
+        "photo": "a11.jpg",
+        "tint": "warn",
+        "role": "Content"
+      },
+      {
+        "id": "adityar",
+        "name": "Aditya Rao",
+        "username": "adityar",
+        "bio": "Data. Dashboard numbers recalibrate ho gaye.",
+        "photo": "a12.jpg",
+        "tint": "accent",
+        "role": "Data"
+      },
+      {
+        "id": "ishitab",
+        "name": "Ishita Banerjee",
+        "username": "ishitab",
+        "bio": "Design. Figma me spacing fix hai, dekh lena.",
+        "photo": "a13.jpg",
+        "tint": "yes",
+        "role": "Design"
+      },
+      {
+        "id": "farhanq",
+        "name": "Farhan Qureshi",
+        "username": "farhanq",
+        "bio": "DevOps. Rollback nahi karna pada, sab thik.",
+        "photo": "a14.jpg",
+        "tint": "warn",
+        "role": "DevOps"
+      },
+      {
+        "id": "ritikas",
+        "name": "Ritika Shah",
+        "username": "ritikas",
+        "bio": "Product. Scope tight rakha hai, good.",
+        "photo": "a15.jpg",
+        "tint": "accent",
+        "role": "Product"
+      },
+      {
+        "id": "manavg",
+        "name": "Manav Grover",
+        "username": "manavg",
+        "bio": "Security. Dependabot alerts 4 -> 0.",
+        "photo": "a16.jpg",
+        "tint": "yes",
+        "role": "Security"
+      },
+      {
+        "id": "poojah",
+        "name": "Pooja Hegde",
+        "username": "poojah",
+        "bio": "Support. Escalation 2, dono resolved.",
+        "photo": "a17.jpg",
+        "tint": "warn",
+        "role": "Support"
+      },
+      {
+        "id": "kunalm",
+        "name": "Kunal Verma",
+        "username": "kunalm",
+        "bio": "Frontend. Shadow bhi same: 0 8px 30px.",
+        "photo": "a18.jpg",
+        "tint": "accent",
+        "role": "Frontend"
+      },
+      {
+        "id": "ayeshas",
+        "name": "Ayesha Siddiqui",
+        "username": "ayeshas",
+        "bio": "Localization. Hindi strings pass ho gayi.",
+        "photo": "a19.jpg",
+        "tint": "yes",
+        "role": "Localization"
+      },
+      {
+        "id": "vikrams",
+        "name": "Vikram Sethi",
+        "username": "vikrams",
+        "bio": "Payments. Gateway timeout replay nahi hoga.",
+        "photo": "a20.jpg",
+        "tint": "warn",
+        "role": "Payments"
+      },
+      {
+        "id": "nehac",
+        "name": "Neha Choudhary",
+        "username": "nehac",
+        "bio": "Research. Notes doc me daal diye.",
+        "photo": "a21.jpg",
+        "tint": "accent",
+        "role": "Research"
+      },
+      {
+        "id": "sidj",
+        "name": "Siddharth Joshi",
+        "username": "sidj",
+        "bio": "Platform. Rate limit 200/min pe set.",
+        "photo": "a22.jpg",
+        "tint": "yes",
+        "role": "Platform"
+      },
+      {
+        "id": "tarab",
+        "name": "Tara Bhat",
+        "username": "tarab",
+        "bio": "Brand. Logo padding 2px zyada theek lag rahi.",
+        "photo": "a23.jpg",
+        "tint": "warn",
+        "role": "Brand"
+      },
+      {
+        "id": "harshitaj",
+        "name": "Harshita Jain",
+        "username": "harshitaj",
+        "bio": "Marketing. Launch copy bhej diya hai.",
+        "photo": "a24.jpg",
+        "tint": "accent",
+        "role": "Marketing"
+      },
+      {
+        "id": "arjunr",
+        "name": "Arjun Reddy",
+        "username": "arjunr",
+        "bio": "iOS. TestFlight build 214 live.",
+        "photo": "a25.jpg",
+        "tint": "yes",
+        "role": "iOS"
+      },
+      {
+        "id": "meherk",
+        "name": "Meher Kapadia",
+        "username": "meherk",
+        "bio": "Ops. Roster audit done, 2 duplicates removed.",
+        "photo": "a26.jpg",
+        "tint": "warn",
+        "role": "Ops"
+      },
+      {
+        "id": "yashp",
+        "name": "Yash Patwardhan",
+        "username": "yashp",
+        "bio": "Growth. Retention 1.8pt up this week.",
+        "photo": "a27.jpg",
+        "tint": "accent",
+        "role": "Growth"
+      },
+      {
+        "id": "diyam",
+        "name": "Diya Malhotra",
+        "username": "diyam",
+        "bio": "Design. Empty states ban gaye.",
+        "photo": "a28.jpg",
+        "tint": "yes",
+        "role": "Design"
+      },
+      {
+        "id": "kabirs",
+        "name": "Kabir Saxena",
+        "username": "kabirs",
+        "bio": "Backend. Patch bhej raha hoon, ek din me.",
+        "photo": "a29.jpg",
+        "tint": "warn",
+        "role": "Backend"
+      },
+      {
+        "id": "ananyab",
+        "name": "Ananya Bose",
+        "username": "ananyab",
+        "bio": "Accessibility. Contrast AA pass, ab focus bhi.",
+        "photo": "a30.jpg",
+        "tint": "accent",
+        "role": "Accessibility"
+      },
+      {
+        "id": "rehanm",
+        "name": "Rehan Mirza",
+        "username": "rehanm",
+        "bio": "Infra. Node 20 upgrade smooth tha.",
+        "photo": "a31.jpg",
+        "tint": "yes",
+        "role": "Infra"
+      },
+      {
+        "id": "sanyak",
+        "name": "Sanya Kulkarni",
+        "username": "sanyak",
+        "bio": "Product. Roadmap Q1 me shift kiya.",
+        "photo": "a32.jpg",
+        "tint": "warn",
+        "role": "Product"
+      },
+      {
+        "id": "devansh",
+        "name": "Devansh Gupta",
+        "username": "devansh",
+        "bio": "Frontend. Zoom lock test ho gaya.",
+        "photo": "a33.jpg",
+        "tint": "accent",
+        "role": "Frontend"
+      },
+      {
+        "id": "prishan",
+        "name": "Prisha Nathan",
+        "username": "prishan",
+        "bio": "Content. Glossary update kar diya.",
+        "photo": "a34.jpg",
+        "tint": "yes",
+        "role": "Content"
+      },
+      {
+        "id": "omprakash",
+        "name": "Om Prakash Rao",
+        "username": "omprakash",
+        "bio": "QA. Regression suite 46 min me pass.",
+        "photo": "a35.jpg",
+        "tint": "warn",
+        "role": "QA"
       }
-  ];
+    ];
 
   var USERS = null;
 
