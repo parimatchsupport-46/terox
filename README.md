@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" width="84" height="84" alt="Terox Chat logo" /></p>
+
 # Terox Chat
 
 A mobile-only chat app: all users in one list, one-on-one threads, and tap-a-message
@@ -43,9 +45,14 @@ library, and only the pieces this app needs are used:
 
 ```
 --bg #f4f5f7 · --card #ffffff · --text #1f2430 · --muted #6b7280 · --border #e5e7eb
---accent #4f6bed · --yes #22a06b · --no #e5484d · shadow 0 8px 30px rgba(0,0,0,.08)
-radius 6px · system-ui · dark: #12141a / #1c1f28 / #eceef3 / #7b92ff
+--brand #3eb798 (the logo green) · --accent #0e8266 · --yes #0b7a5e · --no #e5484d
+radius 6px · system-ui
+dark: #12141a / #1c1f28 / #eceef3 · --accent #3eb798 with dark ink (#07211b) on filled buttons
 ```
+
+One green theme only — light and dark both derive from `#3eb798`, the exact colour of the logo.
+Light mode deepens it to `#0e8266` so white label text clears 4.5:1; dark mode uses the logo green
+itself with dark ink on fills (6.7:1). Red stays reserved for destructive actions.
 
 Used: app bar + theme toggle · cards · buttons (yes/no) · badges · search bar ·
 toggle switch · loader dots (typing) · toast.
@@ -55,6 +62,7 @@ Not used: tables, modals, stepper, file uploader, footer — nothing here needs 
 
 ```
 index.html  chat.html  profile.html
+assets/logo.png      brand mark (app bar, drawer, favicon) + logo-32.png / logo-64.png
 assets/ui.css      tokens + reused components
 assets/app.css     the three screens
 assets/store.js    localStorage data layer (users, chats, profile, prefs)
