@@ -30,49 +30,6 @@
   <link rel="stylesheet" href="assets/admin.css" />
 </head>
 <body>
-  <div class="adm-modal" id="fbModal" hidden role="dialog" aria-modal="true" aria-labelledby="fbTitle">
-    <div class="adm-modal-box card">
-      <div class="adm-form-head">
-        <h2 id="fbTitle">Firebase connection</h2>
-        <button class="icon-btn" id="fbClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      </div>
-      <p class="hint" id="fbStateLine">not connected — the roster lives in this browser</p>
-      <div class="adm-publish" id="fbPublishRow" hidden>
-        <p class="hint" id="fbPublishNote"></p>
-        <button class="btn ghost sm" type="button" id="fbPublish">Send this device's roster up</button>
-      </div>
-      <div class="field">
-        <label for="fbSnippet">Paste the web config from the Firebase console</label>
-        <textarea class="textarea" id="fbSnippet" rows="7" spellcheck="false" placeholder='const firebaseConfig = {&#10;  apiKey: "AIza…",&#10;  authDomain: "you.firebaseapp.com",&#10;  projectId: "you",&#10;  storageBucket: "you.appspot.com"&#10;};'></textarea>
-        <p class="err" id="fbErr" hidden></p>
-      </div>
-      <div class="adm-photo-btns">
-        <button class="btn yes sm" type="button" id="fbSave">Connect in this browser</button>
-        <button class="btn ghost sm" type="button" id="fbFile">Download assets/firebase-config.js</button>
-        <button class="btn ghost sm" type="button" id="fbOff">Disconnect</button>
-      </div>
-      <p class="hint">Collection <code>teroxUsers</code>, images under <code>avatars/</code> in Storage. The panel writes, so lock both behind the admin account with the rules in the README.</p>
-    </div>
-  </div>
-
-  <div class="adm-modal" id="authModal" hidden role="dialog" aria-modal="true" aria-labelledby="authTitle">
-    <div class="adm-modal-box card">
-      <div class="adm-form-head">
-        <h2 id="authTitle">Admin sign in</h2>
-        <button class="icon-btn" id="authClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      </div>
-      <div class="stack" style="--gap:12px">
-        <div class="field"><label for="authEmail">Email</label><input class="input" id="authEmail" type="email" autocomplete="username" /></div>
-        <div class="field"><label for="authPass">Password</label><input class="input" id="authPass" type="password" autocomplete="current-password" /></div>
-        <p class="err" id="authErr" hidden></p>
-      </div>
-      <div class="adm-form-foot">
-        <button class="btn yes" type="button" id="authGo">Sign in</button>
-      </div>
-      <p class="hint">Enable Email/Password in Firebase Authentication and create this admin user there.</p>
-    </div>
-  </div>
-
   <div class="adm-guard" id="cssGuard" role="alert">
     <b>The panel's stylesheet and scripts did not load.</b>
     <span id="guardWhy"></span>
@@ -95,13 +52,7 @@
           <span class="meter"><i id="mUsers">0</i> users</span>
           <span class="meter"><i id="mUsed">0</i> / <i id="mPool">0</i> images used</span>
         </div>
-        <div class="adm-cloud">
-          <button class="chip" id="fbChip" type="button" aria-label="Firebase connection settings">
-            <span class="dot"></span><span id="fbChipText">this device only</span>
-          </button>
-          <button class="btn ghost sm" id="fbAuthBtn" type="button" hidden>Sign in</button>
         </div>
-      </div>
 
       <div class="appbar-actions">
         <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
@@ -231,7 +182,6 @@
       document.getElementById("cssGuard").className = "adm-guard show";
     }, 900);
   </script>
-  <script src="assets/firebase.js"></script>
   <script src="assets/store.js"></script>
   <script src="assets/ui.js"></script>
   <script src="assets/admin.js"></script>

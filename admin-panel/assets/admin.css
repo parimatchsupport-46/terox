@@ -48,7 +48,6 @@
 .meter i { font-style: normal; color: var(--text); font-weight: 700; }
 .meter.full i { color: var(--no); }
 
-.adm-cloud { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: 0 0 auto; }
 .adm-top .appbar-actions { margin-left: 0; }
 .adm-top .icon-btn { width: 44px; height: 44px; }
 .adm-top .btn { min-height: 44px; }
@@ -142,8 +141,7 @@
 .adm-form-head h2 { font-size: 16px; letter-spacing: -0.01em; }
 .adm-form .field { display: grid; gap: 6px; }
 .adm-form label[for],
-.adm-form .lbl,
-.adm-modal label[for] { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.adm-form .lbl { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 /* .drop is a <label> too — it must not inherit the shouty caption styling */
 .drop { font-size: 13px; font-weight: 400; color: var(--text); text-transform: none; letter-spacing: 0; }
 .req, .opt {
@@ -197,36 +195,8 @@
 .adm-photo-btns .hint { margin-left: auto; }
 
 /* ---------- cloud status chip ---------- */
-.chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  min-height: 44px; padding: 8px 12px;
-  border-radius: 999px; border: 1px solid var(--border);
-  background: var(--bg); color: var(--muted);
-  font-size: 12.5px; font-weight: 600;
-}
-.chip .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--muted); flex: none; }
-.chip[data-state="ready"] { color: var(--accent); border-color: var(--accent); }
-.chip[data-state="ready"] .dot { background: var(--yes); }
-.chip[data-state="error"] { color: var(--no); border-color: var(--no); }
-.chip[data-state="error"] .dot { background: var(--no); }
-.chip[data-state="connecting"] .dot { background: var(--warning); animation: pulse 1s infinite; }
-@keyframes pulse { 50% { opacity: 0.25; } }
 
 /* ---------- dialogs (Firebase config, sign in) ---------- */
-.adm-modal { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8, 10, 14, 0.5); }
-.adm-modal[hidden] { display: none; }
-.adm-modal-box { width: 100%; max-width: 520px; max-height: 86vh; overflow: auto; display: grid; gap: 12px; padding: 16px; }
-.adm-modal-box .textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
-.adm-lock { color: var(--no); font-weight: 600; white-space: normal; }
-.adm-publish {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  flex-wrap: wrap; margin: 0; padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
-}
-.adm-publish[hidden] { display: none; }
-.adm-publish .hint { white-space: normal; flex: 1 1 220px; min-width: 0; }
-.adm-publish .btn { min-height: 44px; font-size: 13px; font-weight: 600; }
-.adm-publish .btn:disabled { opacity: 0.5; }
 
 /* ---------- phone: the form becomes a bottom sheet ---------- */
 @media (max-width: 939px) {

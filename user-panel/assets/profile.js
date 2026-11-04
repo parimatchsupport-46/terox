@@ -148,7 +148,35 @@
       });
     });
 
+    renderAccount();
+    document.addEventListener("terox:accounts", renderAccount);
+
     window.addEventListener("terox:change", function () { renderHead(Store.profile()); });
+  }
+
+  /* the gate owns the name and number shown up here, so the profile screen reports
+     what it is signed in as and offers the way out */
+  function renderAccount() {
+    var stat = q("acctStat"), note = q("acctNote"), btn = q("signOutBtn");
+    if (!stat || !window.Auth) return;
+    var acc = Auth.current();
+    var all = Auth.accounts();
+    stat.textContent = acc ? "Signed in as " + Auth.pretty(acc.mobile) : "Signed out";
+    if (btn) btn.hidden = !acc;
+    if (note) {
+      note.textContent = acc
+        ? (all.length > 1
+            ? "Log out to switch to another of the " + all.length + " accounts on this device."
+            : "The only account on this device. Log out to sign in with another number.")
+        : "Sign in with the mobile number this account was created with.";
+    }
+    if (btn && !btn.wired) {
+      btn.wired = true;
+      btn.addEventListener("click", function () {
+        Auth.signOut();
+        location.replace("login.html");
+      });
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

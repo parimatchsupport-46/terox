@@ -216,3 +216,64 @@
 .screen { padding: 14px 14px calc(24px + env(safe-area-inset-bottom, 0px)); }
 .pfoot { display: flex; gap: 10px; margin-top: 4px; }
 .pfoot .btn { flex: 1; }
+
+
+/* ---------- the sign-in gate (login.html) ---------- */
+.gate-page { background: var(--bg); }
+.gate {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 18px 16px calc(30px + env(safe-area-inset-bottom, 0px));
+}
+.gate-hero { text-align: center; padding-top: 8px; }
+.gate-hero .logo-img { width: 56px; height: 56px; border-radius: 16px; }
+.gate-hero h1 { margin: 12px 0 6px; font-size: 1.35rem; letter-spacing: -0.03em; }
+.gate-hero p { margin: 0 auto; max-width: 33ch; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+
+.gate-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.gate-seg .btn { min-height: 44px; border-color: transparent; background: transparent; color: var(--muted); border-radius: 999px; font-size: 14px; font-weight: 700; }
+.gate-seg .btn[aria-pressed="true"] { background: var(--yes); color: var(--accent-ink); }
+[data-theme="dark"] .gate-seg .btn[aria-pressed="true"] { color: var(--accent-ink); }
+
+.gate-card { display: grid; gap: 14px; padding: 16px; }
+.gate-card .field { display: grid; gap: 6px; }
+.gate-card label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.gate-tel { display: flex; align-items: center; gap: 8px; }
+.gate-tel .cc {
+  flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
+  font-weight: 700; font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.gate-tel .input { flex: 1; min-width: 0; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.gate-card .err { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--no); }
+.gate-card .hint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.gate-card .input[aria-invalid="true"] { border-color: var(--no); }
+.linklike { min-height: 44px; padding: 4px; background: none; border: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: underline; cursor: pointer; }
+
+.gate-saved { display: grid; gap: 8px; }
+.gate-saved h2 { margin: 2px 0 0; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.gate-saved[hidden] { display: none; }
+.gate-saved-row { display: grid; gap: 8px; }
+.gate-saved-btn {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 12px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.gate-saved-btn:active,
+.gate-saved-btn:focus-visible { background: var(--bg); }
+.gate-saved-btn b { display: block; font-size: 14px; }
+.gate-saved-btn .num { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gate-saved .hint { margin: 0; font-size: 12px; color: var(--muted); }
+
+.gate-foot { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); text-align: center; }

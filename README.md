@@ -15,9 +15,9 @@ admin-panel/   the roster manager  (index + assets + data)
 
 Each folder is **self-contained** — it carries its own `assets/` and `data/`, and no file
 in either one reaches outside with `../`. That is what lets you deploy or serve a panel on
-its own, and it is why the five runtime files both panels need (`ui.css`, `ui.js`,
-`store.js`, `firebase.js`, `firebase-config.js`) exist as byte-identical copies. The test
-suite fails if the two copies ever drift apart.
+its own, and it is why the three runtime files both panels need (`ui.css`, `ui.js`,
+`store.js`) exist as byte-identical copies. The test suite fails if the two copies ever
+drift apart.
 
 ## Run
 
@@ -64,80 +64,43 @@ blue bubble, and each folder ships `logo.png` plus 32/64 px variants of its own 
 - The people photos are gitignored, so a fresh clone shows initials + tint until
   `assets/avatars/*.jpg` is put in place.
 
-## Firebase — the project is `terox-chat`
+## No backend — and that is the whole design
 
-`assets/firebase.js` is the whole cloud layer and **both panels already ship the web config
-for your `terox-chat` project**, so there is nothing to paste. `localStorage` stays as the
-cache and the offline fallback: the app never needs Firebase to run.
+No server, no Firebase, no database: nothing in either folder talks to another host, and the
+suite fails the build if a URL to one appears or a browser run makes an off-origin request.
 
-| What | Where |
+| What | Where it lives |
 | --- | --- |
-| The roster (users) | Firestore collection `teroxUsers`, one doc per user, `onSnapshot` keeps every open tab live |
-| Profile images | Firebase Storage under `avatars/`, the download URL is saved on the user as `photoURL` |
-| Who may write | Firebase Authentication (Email/Password) — the admin signs in from the panel |
+| The roster both panels show | `data/users.json` in each folder — the shipped list the admin panel edits and exports |
+| Live sharing on one site | `localStorage` key `terox.users.v1`. Both panels run on the same origin, so a user created in the panel is on the chat home page the next time it paints |
+| Sign-in | `terox.accounts.v1` (the accounts registered on this device) + `terox.session.v1` (who is signed in) |
+| Profile images | the uploaded file is centre-cropped to a 360px JPEG (~15 KB) and kept on the user's own record, so it travels inside `users.json` |
+| Chats, prefs, theme | `terox.chats.v1`, `terox.prefs.v1`, `theme` |
 
-What each state means in the panel's chip:
+**Getting the roster onto another device:** edit in the panel → *Export users.json* → commit
+it as `data/users.json` in both folders (Import reads it back, *Reset to shipped list* returns
+to whatever is committed). That file is the sync mechanism — deliberately, since there is no
+service behind it.
 
-- `this device only` — no config found (only possible if you delete `firebase-config.js`
-  contents); the panel keeps working on the device.
-- `Firestore · sign in to write` — connected, but the current rules refuse the write path.
-- `device only (Firebase unreachable)` — the SDK could not load or the project could not be
-  reached; the roster on the device is used, nothing is lost.
+## Signing in (user panel only)
 
-An empty collection and an unreadable collection are kept apart on purpose: the roster read
-asks the server and ignores `fromCache` snapshots, so **a Firestore you cannot reach never
-deletes a roster**, while a Firestore that answers "nobody here yet" shows
-`teroxUsers is empty, so the N users on this device have not been stored yet` with one button
-— **Send this device's roster up** — that writes them once. Use it right after you create the
-admin user, then every later change syncs by itself.
+`user-panel/login.html` is the front door: every screen calls `Auth.gate()` before it paints,
+and with no session it hands you straight to that page.
 
-### Three things still to click in the Firebase console
+- **Sign in** = the mobile number. **Create account** = name + mobile number. That is the whole
+  form — there is no password, no OTP, no email. The number is the key, so it is unique per
+  device and a second account on the same device can be switched to from the list on the gate.
+- **Auto-login:** the session is the account id in `localStorage`, so opening the app again
+  skips the gate. **Profile → Account → Log out** clears it (and any other browser on the same
+  number needs its own sign-in — there is nothing shared to fall back on).
+- Numbers are validated as 10-digit Indian mobiles (`6-9` first). `+91` is shown, not typed.
+- The account name becomes the profile the app shows you (`Store.profile()`), so the drawer,
+  the chat bubbles and the profile screen all read the name you registered.
+- The home list itself is **not** per account: every signed-in user sees the same roster, which
+  is the list the admin panel maintains.
 
-Checked against your project just now: an anonymous read of `teroxUsers` answers
-`403 PERMISSION_DENIED` (so nobody can read or write it yet), and Email/Password sign-in
-answers `CONFIGURATION_NOT_FOUND` (the provider is off). So:
-
-1. **Authentication → Sign-in method → Email/Password → Enable**, then *Users → Add user*
-   with the admin email and password. Sign in from the panel's chip → *Sign in*.
-2. **Firestore → Rules**, paste this (it makes the roster public-read, admin-write):
-
-   ```
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /teroxUsers/{id} {
-         allow read: if true;                                    // the chat app is public
-         allow write: if request.auth != null
-           && request.auth.token.email == 'you@example.com';     // your admin email
-       }
-     }
-   }
-   ```
-3. **Storage → Rules** (and *Get started* if the bucket has never been created — the panel
-   uploads to `terox-chat.firebasestorage.app`):
-
-   ```
-   rules_version = '2';
-   service firebase.storage {
-     match /b/{bucket}/o {
-       match /avatars/{file} {
-         allow read: if true;
-         allow write: if request.auth != null
-           && request.auth.token.email == 'you@example.com'
-           && request.resource.size < 2 * 1024 * 1024
-           && request.resource.contentType.matches('image/.*');
-         allow delete: if request.auth != null
-           && request.auth.token.email == 'you@example.com';
-       }
-     }
-   }
-   ```
-
-A web config is not a secret — anyone using the app has it in their browser. The rules above
-are what protect the data, so they are the part worth setting before you share the URL.
-`admin-panel/assets/firebase-config.js` and `user-panel/assets/firebase-config.js` must stay
-identical (the suite checks it); the connection dialog can also keep a different config for
-one browser, and that wins over an empty file.
+Say the word if you want a PIN on that number — the field and the check are ten lines, but a
+number-only login means anyone holding the phone signs in as you.
 
 ## Vercel
 
@@ -151,10 +114,8 @@ Two static sites, no build command, no install command — and because neither f
 
 If you would rather have one project, set Root Directory to the repository root and use
 `/admin-panel/` and `/user-panel/` as the paths — each folder has a `vercel.json` with
-cache headers, and the repo root has a plain redirect to the user panel. No environment
-variables: the web config is public and lives in `firebase-config.js`. After a deploy,
-open the admin panel, connect Firebase from the chip, sign in, and every user you create
-lands on Firestore within a moment of saving.
+cache headers, and the repo root has a plain redirect to the user panel. Nothing to configure after a deploy: no env vars, no secret, no project id — the panels
+share data through the committed `data/users.json` and the browser's own storage.
 
 ## Screens
 
@@ -211,6 +172,7 @@ plain file input and crops it on a canvas instead.
 ## Files
 
 ```
+user-panel/login.html            the gate: name + mobile, or just the mobile number
 user-panel/index.html            home: the roster (search, live dot, photo)
 user-panel/chat.html             one thread: bubbles, reply/edit/copy/delete modal
 user-panel/profile.html          my profile: prefs, theme, data controls
@@ -218,9 +180,9 @@ user-panel/user.html?u=<id>      read-only profile of any user
 user-panel/assets/ui.css         the design system (both folders carry the same copy)
 user-panel/assets/app.css        the four chat screens
 user-panel/assets/ui.js          theme, drawer, toasts, zoom lock, avatar markup
-user-panel/assets/store.js       the roster + chats + prefs, mirrored to Firebase
-user-panel/assets/firebase.js    the optional cloud layer
-user-panel/assets/firebase-config.js   paste the web config here (empty = local only)
+user-panel/assets/store.js       the roster + chats + prefs, all on-device
+user-panel/assets/auth.js        the account gate: register, sign in, auto-login
+user-panel/assets/login.js       that screen's form
 user-panel/assets/{home,chat,profile,user}.js
 user-panel/assets/avatars/       the image pool — gitignored
 user-panel/data/{users,avatars}.json
@@ -228,13 +190,16 @@ user-panel/data/{users,avatars}.json
 admin-panel/index.html           one screen: roster, form, dialogs
 admin-panel/assets/admin.css     the panel layout (desktop two-column, phone sheet)
 admin-panel/assets/admin.js      form, validation, pool rule, upload, export/import
-admin-panel/assets/ui.css  ui.js  store.js  firebase.js  firebase-config.js   (copies)
+admin-panel/assets/{ui.css,ui.js,store.js}   the same three copies as the user panel
 admin-panel/assets/avatars/      its own copy of the pool — gitignored
 admin-panel/data/{users,avatars}.json
 
 index.html                       redirect to the user panel
 */vercel.json                    cache headers for a static deploy
 ```
+
+`assets/auth.js` is only in the user panel: the admin panel has its own gate of a different
+kind — it is a folder you deploy where you are, not something a visitor can open.
 
 The suite that checks all of this lives outside the repo (`../test-harness`), so the app
 folders stay lean: no tests, no fixtures, no build config.

@@ -1,8 +1,8 @@
 /* ==========================================================================
    admin.js — create / edit / delete the users that appear on the chat home
    page. Only three fields are typed in (name, username, bio); the profile
-   photo is never a URL — it is taken from the image pool in assets/avatars,
-   and a file once given to a user is never handed to another.
+   photo is a file the admin uploads (cropped here, kept on the record) or one
+   taken from the pool in assets/avatars — a pool file once given is never reused.
    ========================================================================== */
 (function () {
   "use strict";
@@ -21,7 +21,7 @@
     title: q("formTitle"), save: q("saveBtn"),
     pName: q("pName"), pNote: q("pNote"), pPrev: q("pPreview"),
     pFile: q("pFile"), pDrop: q("pDrop"), ePhoto: q("pErr"), pPoolNote: q("pPoolNote"),
-    chip: q("fbChip"), chipText: q("fbChipText"), authBtn: q("fbAuthBtn"), lock: q("fbLock")
+    drop: q("pDrop")
   };
 
   /* ---------------- the pool ---------------- */
@@ -39,7 +39,7 @@
     return null;
   }
   function pickedFor(u) {
-    if (u.photoURL) return { kind: "file", url: u.photoURL, path: u.photoPath || null, bytes: 0, stored: true };
+    if (u.photoURL) return { kind: "file", url: u.photoURL, bytes: 0 };
     if (u.photo) return { kind: "pool", file: u.photo };
     return null;
   }
@@ -49,9 +49,9 @@
       var free = nextFree(editingId);
       return free ? { kind: "pool", file: free.name } : null;
     })() : photoPick;
-    if (!p) return { photo: null, photoURL: null, photoPath: null };
-    if (p.kind === "pool") return { photo: p.file, photoURL: null, photoPath: null };
-    return { photo: null, photoURL: p.url, photoPath: p.path || null };
+    if (!p) return { photo: null, photoURL: null };
+    if (p.kind === "pool") return { photo: p.file, photoURL: null };
+    return { photo: null, photoURL: p.url };
   }
 
   /* ---------------- render ---------------- */
@@ -94,9 +94,9 @@
         (editingId ? "" : ", and it is this user's alone");
       return;
     }
-    f.pName.textContent = p.stored ? "stored image" : "your upload";
-    f.pNote.textContent = (p.bytes ? Math.round(p.bytes / 1024) + " KB after cropping · " : "") +
-      (p.path ? "Firebase Storage at " + p.path : "kept in this browser only — connect Firebase to store it");
+    f.pName.textContent = "your upload";
+    f.pNote.textContent = (p.bytes ? Math.round(p.bytes / 1024) + " KB after cropping" : "cropped to a 360px square") +
+      " · kept on this device and inside the exported users.json";
   }
 
   function renderForm() {
@@ -169,7 +169,7 @@
   }
 
   /* the cloud chip and the publish row report state too, so they refresh with the list */
-  function render() { renderMeters(); renderList(); renderCloud(); }
+  function render() { renderMeters(); renderList(); }
 
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
@@ -262,7 +262,7 @@
     if (!data) { UI.toast("Fix the highlighted fields", "bad"); return; }
     if (uploading) { UI.toast("Still reading that image, one moment", "bad"); return; }
     var ph = photoData();
-    data.photo = ph.photo; data.photoURL = ph.photoURL; data.photoPath = ph.photoPath;
+    data.photo = ph.photo; data.photoURL = ph.photoURL;
 
     if (editingId) {
       var snapshot = roster().map(function (u) { return u; });
@@ -300,17 +300,45 @@
     });
   }
 
+  /* The admin's file is cropped on a canvas and kept as a data URL on the user's own
+     record. There is no file store behind this — the roster, and with it the image,
+     travels in `data/users.json` (Export / Import) and in this browser's storage. */
+  var IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  var IMG_MAX = 8 * 1024 * 1024;
+  function shrinkToSquare(file) {
+    if (!file || !window.FileReader || !window.Image) return Promise.reject(new Error("this browser cannot read image files"));
+    if (IMG_TYPES.indexOf(file.type) === -1) return Promise.reject(new Error("use a JPG, PNG or WebP file"));
+    if (file.size > IMG_MAX) return Promise.reject(new Error("that file is over 8 MB"));
+    return new Promise(function (resolve, reject) {
+      var fr = new window.FileReader();
+      fr.onerror = function () { reject(new Error("could not read the file")); };
+      fr.onload = function () {
+        var img = new window.Image();
+        img.onerror = function () { reject(new Error("that is not a readable image")); };
+        img.onload = function () {
+          var S = 360, cv = document.createElement("canvas");
+          cv.width = S; cv.height = S;
+          var ctx = cv.getContext("2d");
+          if (!ctx) return reject(new Error("this browser cannot draw the crop"));
+          var side = Math.min(img.width, img.height);
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, S, S);
+          var url = cv.toDataURL("image/jpeg", 0.72);
+          resolve({ url: url, bytes: Math.round(url.length * 0.75) });
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
   function takeFile(file) {
-    if (!window.FB || !FB.uploadPhoto) { f.ePhoto.textContent = "the upload layer is not loaded"; f.ePhoto.hidden = false; return; }
     uploading = true;
     f.ePhoto.hidden = true;
     renderPhoto();
-    var handle = f.user.value.trim() || Store.slug(f.name.value);
-    FB.uploadPhoto(file, handle || "user").then(function (r) {
+    shrinkToSquare(file).then(function (r) {
       uploading = false;
-      photoPick = { kind: "file", url: r.url, path: r.path || null, bytes: r.bytes, stored: r.where === "storage" };
+      photoPick = { kind: "file", url: r.url, bytes: r.bytes };
       renderPhoto();
-      UI.toast(r.where === "storage" ? "image stored in Firebase Storage" : "image kept in this browser — connect Firebase to store it", "ok");
+      UI.toast("image cropped and attached to this user", "ok");
     }).catch(function (e) {
       uploading = false;
       f.pFile.value = "";
@@ -320,90 +348,6 @@
     });
   }
 
-  /* ---------------- cloud status ---------------- */
-  function renderCloud() {
-    if (!window.FB) return;
-    var st = FB.state(), live = st === "ready", in_ = live && FB.signedIn();
-    f.chip.setAttribute("data-state", st);
-    f.chipText.textContent = st === "ready"
-      ? (in_ ? "Firestore · signed in" : "Firestore · sign in to write")
-      : st === "connecting" ? "connecting…"
-      : st === "error" ? "device only (Firebase unreachable)"
-      : "this device only";
-    f.authBtn.hidden = !live || in_;
-    f.authBtn.textContent = "Sign in";
-    f.lock.hidden = !(live && !in_);
-    /* when the read itself is refused, say why - "connected" alone would be a lie */
-    var trouble = live && FB.reason ? FB.reason() : "";
-    q("fbStateLine").textContent = st === "ready"
-      ? "connected to " + (FB.config() || {}).projectId + (in_ ? " — signed in as " + FB.signedIn().email : " — read access only") +
-        (trouble ? " · " + trouble : "")
-      : st === "error" ? "error: " + FB.reason()
-      : "not connected — the roster lives in this browser";
-    /* a connected-but-empty project is the one state where the roster is still
-       only on this device - say so, and offer to send it up */
-    var empty = live && Store.cloudEmpty();
-    q("fbPublishRow").hidden = !empty;
-    if (empty) {
-      q("fbPublishNote").textContent = "teroxUsers is empty, so the " + Store.users().length +
-        " users on this device have not been stored yet." + (in_ ? "" : " Sign in first — the rules refuse anonymous writes.");
-    }
-  }
-
-  function wireCloud() {
-    if (!window.FB) return;
-    FB.on(renderCloud);
-    f.chip.addEventListener("click", function () {
-      q("fbModal").hidden = false;
-      if (FB.config()) q("fbSnippet").value = "const firebaseConfig = " + JSON.stringify(FB.config(), null, 2) + ";";
-      q("fbSnippet").focus();
-    });
-    q("fbClose").addEventListener("click", function () { q("fbModal").hidden = true; });
-    q("fbModal").addEventListener("click", function (e) { if (e.target === q("fbModal")) q("fbModal").hidden = true; });
-    q("fbSave").addEventListener("click", function () {
-      var parsed = FB.parseSnippet(q("fbSnippet").value);
-      if (parsed.error) { q("fbErr").textContent = "could not read a config: " + parsed.error; q("fbErr").hidden = false; return; }
-      q("fbErr").hidden = true;
-      FB.setConfig(parsed.config);
-      FB.connect(true).then(function () { renderCloud(); UI.toast("connecting to " + parsed.config.projectId, "ok"); });
-    });
-    q("fbFile").addEventListener("click", function () {
-      var parsed = FB.parseSnippet(q("fbSnippet").value);
-      if (parsed.error) { q("fbErr").textContent = parsed.error; q("fbErr").hidden = false; return; }
-      var a = document.createElement("a");
-      a.href = "data:text/javascript;charset=utf-8," + encodeURIComponent(FB.configFile(parsed.config));
-      a.download = "firebase-config.js";
-      document.body.appendChild(a); a.click(); a.remove();
-      UI.toast("drop it at assets/firebase-config.js and commit", "ok");
-    });
-    q("fbPublish").addEventListener("click", function () {
-      var btn = q("fbPublish");
-      btn.disabled = true;
-      Store.publishRoster().then(function (n) {
-        UI.toast(n + " users sent to Firestore — the roster is shared now", "ok");
-        renderCloud();
-      }, function (e) {
-        UI.toast(e.message || "Firestore refused the write", "bad");
-      }).then(function () { btn.disabled = false; });
-    });
-    q("fbOff").addEventListener("click", function () { FB.clearConfig(); q("fbModal").hidden = true; renderCloud(); UI.toast("back to this device only", "ok"); });
-    f.authBtn.addEventListener("click", function () { q("authModal").hidden = false; q("authEmail").focus(); });
-    q("authClose").addEventListener("click", function () { q("authModal").hidden = true; });
-    q("authModal").addEventListener("click", function (e) { if (e.target === q("authModal")) q("authModal").hidden = true; });
-    q("authGo").addEventListener("click", function () {
-      q("authErr").hidden = true;
-      FB.signIn(q("authEmail").value, q("authPass").value).then(function () {
-        q("authModal").hidden = true; q("authPass").value = "";
-        renderCloud();
-        UI.toast("signed in — the roster is now shared through Firestore", "ok");
-      }).catch(function (e) { q("authErr").textContent = e.message || "sign-in failed"; q("authErr").hidden = false; renderCloud(); });
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") { q("fbModal").hidden = true; q("authModal").hidden = true; }
-    });
-  }
-
-  /* ---------------- export / import / reset ---------------- */
   function exportJSON() {
     var json = JSON.stringify(roster(), null, 2) + "\n";
     var a = document.createElement("a");
@@ -447,7 +391,6 @@
   /* ---------------- boot ---------------- */
   function init() {
     render();
-    wireCloud();
     renderForm();          /* the photo preview is useful before anyone is being edited */
     q("newBtn").addEventListener("click", openNew);
     q("cancelBtn").addEventListener("click", closeForm);

@@ -189,10 +189,6 @@
     emit();
     return next;
   }
-  function pushCloud(u) {
-    syncCloud();
-    if (cloudOn() && global.FB.putUser) global.FB.putUser(u).catch(function () {});
-  }
   function usedPhotos(list) {
     var seen = {};
     (list || users()).forEach(function (u) { if (u.photo) seen[u.photo] = 1; });
@@ -237,14 +233,14 @@
       bio: String(data.bio || "").trim(),
       photo: data.photo === undefined ? freePhoto(list) : data.photo,
       /* an image the admin uploaded lives here, not in the pool */
+      /* an image the admin uploaded travels as this data URL - there is no
+         file store to point at, and none is wanted */
       photoURL: data.photoURL || null,
-      photoPath: data.photoPath || null,
       tint: "accent",
       role: String(data.role || "").trim()
     };
     list.push(u);
     saveUsers(list);
-    pushCloud(u);
     return u;
   }
   function updateUser(id, patch) {
@@ -256,9 +252,7 @@
       return next;
     });
     saveUsers(list);
-    var mine = list.filter(function (u) { return u.id === id; })[0] || null;
-    if (mine) pushCloud(mine);
-    return mine;
+    return list.filter(function (u) { return u.id === id; })[0] || null;
   }
   function removeUser(id) {
     var gone = null;
@@ -268,61 +262,7 @@
       return false;
     });
     saveUsers(list);
-    syncCloud();
-    if (cloudOn()) {
-      global.FB.dropUser(id);
-      if (gone && gone.photoPath) global.FB.removePhoto(gone.photoPath);
-    }
     return gone;
-  }
-
-  /* ---------------- the cloud layer (optional) ----------------
-     firebase.js boots itself. When it reaches "ready" the roster comes from
-     Firestore and every write is mirrored there; until then (or if the config
-     is empty) this file is the only source and nothing else changes. */
-  var cloud = null;
-  var cloudEmpty = false;   /* Firestore answered, but teroxUsers holds nobody yet */
-  function cloudOn() { return cloud === "ready"; }
-  function adopt(list) { USERS = list; write(KEY.users, list); emit(); }
-  function syncCloud() {
-    if (!global.FB || cloud === "on" || cloud === "ready") return;
-    cloud = "on";
-    global.FB.on(function (state, why, user) {
-      if (state !== "ready") { cloud = state === "connecting" ? "on" : "off"; cloudEmpty = false; return; }
-      cloud = "ready";
-      global.FB.loadRoster().then(function (rows) {
-        if (rows && rows.length) { adopt(rows); cloudEmpty = false; }
-        else if (rows) { cloudEmpty = users().length > 0; emit(); }
-        else { cloudEmpty = false; }   /* null: no answer from the server, say nothing */
-        global.FB.watchRoster(function (live, meta) {
-          /* an empty cache snapshot proves nothing */
-          if (meta && meta.fromCache && (!live || !live.length)) return;
-          /* an empty collection is what a brand-new project looks like before the
-             first publish - it must never delete a roster that already exists */
-          if ((!live || !live.length) && users().length) { cloudEmpty = true; emit(); return; }
-          adopt(live || []);
-          cloudEmpty = !live || !live.length;
-        });
-      }).catch(function () {
-        /* the rules can refuse a read before anyone signs in: the local list stands */
-      });
-    });
-  }
-  /* once, from the admin panel: send this device's roster up so the project is
-     not born empty. Writes are refused unless the admin is signed in. */
-  function publishRoster() {
-    if (!global.FB || global.FB.state() !== "ready") return Promise.reject(new Error("Firebase is not connected yet"));
-    var list = users();
-    if (!list.length) return Promise.reject(new Error("nothing on this device to send"));
-    var sent = 0;
-    return list.reduce(function (p, u) {
-      return p.then(function () { return global.FB.putUser(u).then(function (done) { if (done) sent += 1; }); });
-    }, Promise.resolve()).then(function () {
-      if (!sent) throw new Error("Firestore refused every write - sign in as the admin first");
-      cloudEmpty = false;
-      emit();
-      return sent;
-    });
   }
 
   /* ---------------- threads ---------------- */
@@ -494,12 +434,8 @@
     global.dispatchEvent(new Event("terox:change"));
   }
 
-  syncCloud();
 
   global.Store = {
-    cloudState: function () { return cloud === "ready" ? "ready" : (global.FB ? global.FB.state() : "off"); },
-    cloudEmpty: function () { return cloudEmpty; },
-    publishRoster: publishRoster,
     get USERS() { return users(); },
     chats: chats, thread: thread, order: order, last: last, lastAt: lastAt,
     unreadTotal: unreadTotal, markRead: markRead,
