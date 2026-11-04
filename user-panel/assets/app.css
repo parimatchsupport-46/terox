@@ -34,7 +34,7 @@
 .urow .p { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
 .urow .p span { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .urow.unread .p span { color: var(--text); font-weight: 600; }
-.urow .p .st { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--yes); font-weight: 600; flex: none; }
+.urow .p .st { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--online); font-weight: 600; flex: none; }
 .urow .p .st .dot-status { width: 7px; height: 7px; }
 .empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px; }
 
@@ -192,8 +192,8 @@
 .phero .avatar { margin: 0 auto 12px; }
 .phero h1 { font-size: 1.3rem; letter-spacing: -0.02em; }
 .phero .h { color: var(--muted); font-size: 14px; margin-top: 2px; }
-.phero .live { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--yes); }
-.phero .live .dot-status { background: var(--yes); }
+.phero .live { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--online); }
+.phero .live .dot-status { background: var(--online); }
 .tints { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
 .tints button {
   width: 44px; height: 44px; border-radius: 999px;
@@ -218,7 +218,11 @@
 .pfoot .btn { flex: 1; }
 
 
-/* ---------- the sign-in gate (login.html) ---------- */
+.listbar .hint span { color: var(--online); }   /* "35 online" in the home header */
+
+/* the chat header echoes the same presence colour so "Online" reads the same everywhere */
+#peerStatus { color: var(--online); font-weight: 600; }
+
 .gate-page { background: var(--bg); }
 .gate {
   display: grid;

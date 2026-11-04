@@ -18,6 +18,7 @@
   --accent-ink: #ffffff;
   --yes: #0b64c4;
   --no: #e5484d;
+  --online: #0a6b39;      /* presence only: green means "here", nothing else wears it */
 
   --radius: 6px;
   --bar-h: 56px;
@@ -37,6 +38,7 @@
   --accent: #1e90ff;
   --accent-ink: #041426;     /* dark ink on the bright blue keeps 5.7:1 */
   --yes: #1e90ff;
+  --online: #34c96f;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -200,7 +202,7 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
   line-height: 18px;
 }
 .dot-status { width: 8px; height: 8px; border-radius: 999px; background: var(--muted); flex: none; }
-.dot-status.online { background: var(--brand); }
+.dot-status.online { background: var(--online); }
 
 /* ---------- avatars ---------- */
 .avatar {
@@ -252,7 +254,7 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
   right: -1px; bottom: -1px;
   width: 12px; height: 12px;
   border-radius: 999px;
-  background: var(--yes);
+  background: var(--online);
   border: 2px solid var(--card);
 }
 
