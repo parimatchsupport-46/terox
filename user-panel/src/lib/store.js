@@ -2,7 +2,7 @@
    store.js — data layer for Terox Chat (localStorage, no backend).
    Home, Chat and Profile all read/write through this so they stay in sync.
    ========================================================================== */
-(function (global) {
+const Store = (function () {
   "use strict";
 
   var KEY = {
@@ -364,7 +364,7 @@
 
   function read(key, fallback) {
     try {
-      var raw = global.localStorage.getItem(key);
+      var raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
     } catch (e) {
       return fallback;
@@ -372,7 +372,7 @@
   }
   function write(key, value) {
     try {
-      global.localStorage.setItem(key, JSON.stringify(value));
+      localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {}
   }
 
@@ -632,11 +632,11 @@
   function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
 
   function emit() {
-    global.dispatchEvent(new Event("terox:change"));
+    window.dispatchEvent(new Event("terox:change"));
   }
 
 
-  global.Store = {
+  return {
     get USERS() { return users(); },
     chats: chats, thread: thread, order: order, last: last, lastAt: lastAt,
     unreadTotal: unreadTotal, markRead: markRead,
@@ -656,4 +656,6 @@
       return { id: id, name: "Chat", username: "", bio: "", photo: null, role: "", tint: "accent" };
     }
   };
-})(window);
+})();
+
+export default Store;

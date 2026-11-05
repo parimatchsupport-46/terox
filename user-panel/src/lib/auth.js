@@ -6,7 +6,9 @@
    keeps you signed in are plain localStorage entries, which is also why the app
    opens straight to the list after the first sign-in.
    ========================================================================== */
-(function () {
+import Store from "./store.js";
+
+const Auth = (function () {
   "use strict";
 
   var ACC = "terox.accounts.v1";
@@ -66,12 +68,23 @@
 
   /* the chat app reads "me" from Store.profile(), so the account IS the profile */
   function applyProfile(a) {
-    if (!a || !window.Store || !Store.saveProfile) return;
+    if (!a || !Store || !Store.saveProfile) return;
     Store.saveProfile({ name: a.name, username: a.handle, phone: pretty(a.mobile) });
   }
 
   function trust(a) { write(SES, a.id); applyProfile(a); return a; }
   function forget() { write(SES, null); }
+
+  /* the gate only needs to know whether a session id resolves to an account:
+     adopting the profile stays with current(), which is what the old page
+     scripts called after the store was already in */
+  function peek() {
+    var id = read(SES, null);
+    if (!id) return false;
+    var all = accounts();
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return true;
+    return false;
+  }
 
   function current() {
     var id = read(SES, null);
@@ -84,22 +97,13 @@
 
   function signOut() { forget(); ping(); }
 
-  /* every screen but the gate itself runs this: no session, no app */
-  function gate() {
-    if (current()) return true;
-    var here = location.pathname.split("/").pop() + location.search;
-    location.replace("login.html?next=" + encodeURIComponent(here === "login.html" ? "index.html" : here));
-    return false;
-  }
-
-  window.Auth = {
+  return {
     keys: { accounts: ACC, session: SES },
     digits: digits, norm: norm, valid: valid, pretty: pretty,
     accounts: accounts, find: find, register: register, signIn: signIn,
-    current: current, trust: trust, signOut: signOut, forget: forget,
-    applyProfile: applyProfile, gate: gate
+    current: current, peek: peek, trust: trust, signOut: signOut, forget: forget,
+    applyProfile: applyProfile
   };
-
-  /* run the gate as soon as this file is in, before the page script paints */
-  if (document.body && document.body.dataset && document.body.dataset.gate !== "off") gate();
 })();
+
+export default Auth;

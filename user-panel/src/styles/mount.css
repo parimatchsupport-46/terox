@@ -1,0 +1,3 @@
+/* The React mount node must not take part in the layout: with "display:contents"
+   the tree under <body> is exactly the tree the HTML pages used to have. */
+#root { display: contents; }
