@@ -655,3 +655,26 @@
 .pay-form .pay-utr input { background: var(--bg); color: var(--text); font-size: 16px; text-align: left; }
 .pay-actions { gap: 10px; }
 .pay-actions .btn { min-height: 48px; }
+
+/* A gentle entrance on route changes; overlays stay outside this animation. */
+.app { animation: page-enter 240ms cubic-bezier(.2,.7,.2,1); }
+.gate, body.gate-page > .appbar { animation: page-enter 240ms cubic-bezier(.2,.7,.2,1); }
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Animate only newly sent or received messages, without replaying on edits. */
+.msg.msg-arrive { animation: message-in 260ms cubic-bezier(.2,.75,.25,1); }
+.msg.mine.msg-arrive { animation-name: message-out; }
+@keyframes message-in {
+  from { opacity: 0; transform: translate(-8px, 8px) scale(.98); }
+  to { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+@keyframes message-out {
+  from { opacity: 0; transform: translate(8px, 8px) scale(.98); }
+  to { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app, .gate, body.gate-page > .appbar, .msg.msg-arrive, .msg.mine.msg-arrive { animation: none; }
+}

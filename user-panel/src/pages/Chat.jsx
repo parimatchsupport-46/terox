@@ -32,6 +32,11 @@ export default function Chat() {
   const first = user.name.split(" ")[0];
   const msgs = Store.thread(uid).messages;
   const prefs = Store.prefs();
+  // Already-present messages remain still; only messages added in this visit animate.
+  const initialMessages = useRef({ uid: uid, ids: new Set(msgs.map(function (m) { return m.id; })) });
+  if (initialMessages.current.uid !== uid) {
+    initialMessages.current = { uid: uid, ids: new Set(msgs.map(function (m) { return m.id; })) };
+  }
 
   const typing = Store.typingOn();
   const navigate = useNavigate();
@@ -107,7 +112,8 @@ export default function Chat() {
   useEffect(function () {
     const el = thread.current;
     if (!el) return;
-    const smooth = seen.current !== 0 && msgs.length !== seen.current;
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const smooth = !reduceMotion && seen.current !== 0 && msgs.length !== seen.current;
     seen.current = msgs.length;
     if (el.scrollTo) el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
     else el.scrollTop = el.scrollHeight;
@@ -380,11 +386,11 @@ export default function Chat() {
     );
   }
 
-  function Bubble({ m }) {
+  function bubble(m) {
     const mine = m.from === "me";
     const quoted = m.replyTo ? Store.find(uid, m.replyTo) : null;
     return (
-      <div className={"msg" + (mine ? " mine" : "")} data-id={m.id}>
+      <div key={m.id} className={"msg" + (mine ? " mine" : "") + (initialMessages.current.ids.has(m.id) ? "" : " msg-arrive")} data-id={m.id}>
         {!mine && <span className="av" aria-hidden="true" dangerouslySetInnerHTML={{ __html: UI.avatarHTML(user, 36, false) }} />}
         <div
           className="bubble"
@@ -421,7 +427,7 @@ export default function Chat() {
       lastDay = day;
       rows.push(<span className="badge badge-secondary day" key={"d" + m.id}>{Store.dayStamp(m.at)}</span>);
     }
-    rows.push(<Bubble m={m} key={m.id} />);
+    rows.push(bubble(m));
   });
 
   const hint = prefs.enterToSend

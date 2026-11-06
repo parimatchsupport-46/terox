@@ -36,8 +36,9 @@ function Guard({ children }) {
 
 export default function App() {
   useStore();
+  const location = useLocation();
   return (
-    <Routes>
+    <Routes location={location} key={location.pathname + location.search}>
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/" element={<Guard><Home /></Guard>} />
       <Route path="/chat" element={<Guard><Chat /></Guard>} />
