@@ -135,19 +135,18 @@ function Dashboard() {
 
   if (!ready) return <p className="settings-desc" role="status">{error || "Loading dashboard…"}</p>;
   const cards = [
-    { label: "Total Users", value: total, icon: "👥", color: "accent" },
+    { label: "Contacts in Report", value: total, icon: "👥", color: "accent" },
     { label: "Chatted", value: chatted, icon: "💬", color: "yes" },
     { label: "No Chats", value: noChat, icon: "🤫", color: "warn" },
     { label: "Payments Done", value: paid, icon: "✅", color: "yes" },
     { label: "No Payment", value: noPay, icon: "💳", color: "warn" },
     { label: "UTR Pending", value: pending, icon: "⏳", color: "accent" },
-    { label: "UTR Submitted", value: utrSubmitted, icon: "📋", color: "accent" },
-    { label: "Users On Panel", value: total, icon: "🟢", color: "yes" }
+    { label: "UTR Submitted", value: utrSubmitted, icon: "📋", color: "accent" }
   ];
 
   return (
     <div>
-      <p className="dash-period">{resetAt ? "Activity since the last dashboard reset. User totals remain current." : "All recorded activity. User totals are current."}</p>
+      <p className="dash-period">{resetAt ? "Activity since the last dashboard reset. Only contacts active in this period are counted; all contacts remain in Users." : "All recorded activity. Contacts in Report includes the full roster until the first reset."}</p>
       <div className="dash-grid">
       {cards.map(function (c) {
         return (
@@ -382,7 +381,7 @@ function Settings() {
     try {
       // Use server time so all admin devices share the same reporting period.
       await setDoc(doc(db, "data", "terox.dashboard.reset.v1"), { resetAt: serverTimestamp() });
-      setResetMessage("Dashboard activity reset. User totals remain current; no chats or payments were deleted.");
+      setResetMessage("Dashboard activity reset. All report counts start fresh; no users, chats or payments were deleted.");
       UI.toast("Dashboard reset", "ok");
     } catch (e) {
       setResetMessage("Dashboard reset failed: " + (e.message || "Check Firebase and your connection."));
@@ -411,7 +410,7 @@ function Settings() {
       </section>
       <section className="settings-section card">
         <h3 className="settings-title">Reset dashboard activity</h3>
-        <p className="settings-desc">Start dashboard activity counts again from now. Chats, payment requests, users and UPI settings are not deleted. Total user counts remain current.</p>
+        <p className="settings-desc">Start all dashboard report counts again from now. New activity will appear here; chats, payment requests, users and UPI settings are not deleted.</p>
         <button className="btn ghost" type="button" onClick={resetDashboard} disabled={resetting}>{resetting ? "Resetting…" : "Clear dashboard data"}</button>
         {resetting && <p className="settings-desc" role="status">Waiting for Firestore… Check your connection if this takes too long.</p>}
         {resetMessage && <p className="settings-result" role="status">{resetMessage}</p>}
