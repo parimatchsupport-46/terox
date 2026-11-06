@@ -39,8 +39,8 @@ const NOTES = [
 const FIRST_WAIT = 4000;
 const NEXT_WAIT = 500;
 const TYPING = 3000;
-const NEXT = { start: "services", "pick-plan": "calls", "pick-type": "pay", paid: "ack" };
-const PENDING = { services: "services", calls: "calls", pay: "pay" };
+const NEXT = { start: "services", "pick-service": "rates", "pick-plan": "pay", "pick-type": "pay", paid: "ack" };
+const PENDING = { services: "services", rates: "rates", pay: "pay" };
 
 function money(n) { return "₹" + n; }
 function price(d, key) {
@@ -55,6 +55,7 @@ function picksOf(list) {
   const p = { d: null, svc: null, sec: null, mode: null, key: null, amount: null };
   list.forEach(function (m) {
     if (m.from !== "me" || !m.pick) return;
+    if (m.kind === "pick-service") { p.svc = m.pick.svc; p.sec = m.pick.sec; p.mode = m.pick.mode; p.key = m.pick.key; }
     if (m.kind === "pick-plan") { p.d = m.pick.d; p.svc = m.pick.svc; p.sec = m.pick.sec; }
     if (m.kind === "pick-type" || m.kind === "paid") { p.mode = m.pick.mode; p.key = m.pick.key; }
   });
@@ -103,8 +104,8 @@ export default function Chat() {
   /* ---------- the scripted beat ---------- */
   function send(step) {
     const p = picksOf(Store.thread(uid).messages);
-    if (step === "services") Store.receive(uid, "Rate card 👇 niche se apna plan tap kar dijiye.", { kind: "services" });
-    if (step === "calls") Store.receive(uid, "Ab bataiye — call kis mode me karni hai?", { kind: "calls" });
+    if (step === "services") Store.receive(uid, "Apna service chuniye — Call ya Video Call 👇", { kind: "services" });
+    if (step === "rates") Store.receive(uid, "Rate card 👇 niche se apna plan tap kar dijiye.", { kind: "rates", pick: { key: p.key, svc: p.svc, sec: p.sec } });
     if (step === "pay") Store.receive(uid, "Payment kijiye — payment ke bina service start nahi hogi.", { kind: "pay", pick: { d: p.d, svc: p.svc, mode: p.mode, key: p.key, amount: p.amount } });
     if (step === "ack") Store.receive(uid, "Payment mil gaya ✅ " + (p.mode || "Call") + " · " + (p.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
   }
@@ -279,33 +280,36 @@ export default function Chat() {
   }
 
   /* ---------- the option blocks B sends ---------- */
-  function rateCard() {
-    /* the head and its rows are siblings inside .opts, exactly like the
-       imperative version built them - no wrapper, so the flex gaps line up */
+  function rateCard(secKey) {
+    /* one section only — the service the user already picked at the top.
+       The head and its rows are siblings inside .opts, no wrapper, so the
+       flex gaps line up */
     const kids = [];
-    SECTIONS.forEach(function (sec) {
-      kids.push(<p className="opts-h" key={sec.key + "-h"}>{sec.name}</p>);
-      RATE.forEach(function (r) {
-        const amt = money(sec.key === "x" ? r.x : r.v);
-        kids.push(
-          <button className="opt" type="button" key={sec.key + r.d} onClick={function (e) {
-            e.stopPropagation();
-            sendPick(sec.name + " · " + r.d + " · " + amt, "pick-plan", { d: r.d, sec: sec.key, svc: sec.name });
-          }}>
-            <span className="lbl">{r.d}</span>
-            <span className="price">{amt}</span>
-          </button>
-        );
-      });
+    const sec = SECTIONS.filter(function (s) { return s.key === secKey; })[0] || SECTIONS[0];
+    kids.push(<p className="opts-h" key={sec.key + "-h"}>{sec.name}</p>);
+    RATE.forEach(function (r) {
+      const amt = money(secKey === "x" ? r.x : r.v);
+      kids.push(
+        <button className="opt" type="button" key={secKey + r.d} onClick={function (e) {
+          e.stopPropagation();
+          sendPick(sec.name + " · " + r.d + " · " + amt, "pick-plan", { d: r.d, sec: secKey, svc: sec.name });
+        }}>
+          <span className="lbl">{r.d}</span>
+          <span className="price">{amt}</span>
+        </button>
+      );
     });
     NOTES.forEach(function (n) { kids.push(<p className="opts-n" key={n}>{n}</p>); });
     return <div className="opts">{kids}</div>;
   }
 
-  function typePicker() {
+  function servicePicker() {
+    /* the two choices that open right after "Start chat": Call (voice) or
+       Video Call. Tapping one sends pick-service and B answers with that
+       service's rate card */
     const opts = [
-      { ic: "📞", name: "Voice calling", key: "v" },
-      { ic: "🎥", name: "Video calling", key: "x" }
+      { ic: "📞", name: "Call", key: "v", svc: "Voice calling", mode: "Voice calling" },
+      { ic: "🎥", name: "Video Call", key: "x", svc: "Video calling", mode: "Video calling" }
     ];
     return (
       <div className="opts">
@@ -313,15 +317,15 @@ export default function Chat() {
           return (
             <button className="opt big" type="button" key={o.key} onClick={function (e) {
               e.stopPropagation();
-              sendPick(o.name + " ✅", "pick-type", { mode: o.name, key: o.key });
+              sendPick(o.name + " ✅", "pick-service", { key: o.key, svc: o.svc, sec: o.key, mode: o.mode });
             }}>
               <span className="ic">{o.ic}</span>
               <span className="lbl">{o.name}</span>
-              <span className="price">{price(picks.d || "10 min", o.key)}</span>
+              <span className="price">{price("10 min", o.key)}</span>
             </button>
           );
         })}
-        <p className="opts-n">Rate aapke chune hue plan ke hisaab se lagega.</p>
+        <p className="opts-n">Aage ke step aapke chune hue service par depend kareinge.</p>
       </div>
     );
   }
@@ -365,8 +369,8 @@ export default function Chat() {
             <span className="quote busted">Original message deleted</span>
           ))}
           <span className="mtext">{m.text}</span>
-          {!mine && m.kind === "services" && rateCard()}
-          {!mine && m.kind === "calls" && typePicker()}
+          {!mine && m.kind === "services" && servicePicker()}
+          {!mine && m.kind === "rates" && rateCard(m.pick && m.pick.sec)}
           {!mine && m.kind === "pay" && payAsk(m)}
           <span className={"t" + (m.editedAt ? " edited" : "")}>{Store.time(m.at) + (m.editedAt ? " · edited" : "")}</span>
         </div>
