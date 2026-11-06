@@ -7,7 +7,7 @@
    stylesheet already knew; only the plumbing is React.
    ========================================================================== */
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Store from "../lib/store.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
@@ -34,6 +34,7 @@ export default function Chat() {
   const prefs = Store.prefs();
 
   const typing = Store.typingOn();
+  const navigate = useNavigate();
   const [raw, setRaw] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -221,7 +222,7 @@ export default function Chat() {
   }
 
   /* ---------- payment dialog ---------- */
-  function openPay(m) { setPayMsg(m); setPayUtr(""); setPayProof(null); setPaySecs(900); setPayOpen(true); document.body.classList.add("locked"); }
+  function openPay(m) { navigate("/pay?uid=" + encodeURIComponent(uid)); }
   function closePay() { setPayOpen(false); setPayMsg(null); setPayUtr(""); document.body.classList.remove("locked"); }
   function mmss(s) { var m = Math.floor(s / 60); var r = s % 60; return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r; }
   /* tapping "Payment Complete" (UTR must be filled) creates a payment request
@@ -453,59 +454,6 @@ export default function Chat() {
         </div>
       </div>
 
-      <button className="scrim" id="payScrim" hidden aria-hidden="true" tabIndex={-1} onClick={closePay} />
-      <div className="dlg" id="payDlg" role="dialog" aria-modal="true" aria-labelledby="paySub" hidden={!payOpen}>
-        <div className="dlg-box">
-          <div className="dlg-head">
-            <b id="paySub">{pay.amount ? "Pay " + pay.amount + " to " + first : "Payment"}</b>
-            <button className="icon-btn" type="button" id="payClose" aria-label="Close payment" onClick={closePay}><IcoClose sw={2.4} /></button>
-          </div>
-          <div className="pay-body">
-            <div className="pay-qr">{(function () {
-              var qr = Store.qr();
-              if (!qr) return <span dangerouslySetInnerHTML={{ __html: QR_DEFAULT }} />;
-              if (qr.startsWith("http") || qr.startsWith("data:")) return <img src={qr} alt="QR code" className="pay-qr-img" />;
-              return <span dangerouslySetInnerHTML={{ __html: QR_DEFAULT }} />;
-            })()}</div>
-            <dl className="pay-rows">
-              <div><dt>To</dt><dd id="payTo">terox@ybl</dd></div>
-              <div><dt>Service</dt><dd id="payService">{pay.mode || pay.svc || "—"}</dd></div>
-              <div><dt>Plan</dt><dd id="payPlan">{pay.d || "—"}</dd></div>
-              <div><dt>Amount</dt><dd id="payAmount">{pay.amount || "—"}</dd></div>
-            </dl>
-          </div>
-          <div className="pay-timer-bar">
-            <span className="pay-timer-ic">⏰</span>
-            <span className="pay-timer-txt">Payment valid for</span>
-            <span className="pay-timer" id="payTimer">{mmss(paySecs)}</span>
-          </div>
-          <div className="pay-utr">
-            <label htmlFor="payUtrInput">UTR Number</label>
-            <input id="payUtrInput" type="text" value={payUtr} onChange={function (e) { setPayUtr(e.target.value); }} placeholder="Enter UTR Number" autoComplete="off" inputMode="text" />
-          </div>
-          <div className="pay-proof">
-            <label>Payment Proof (screenshot upload)</label>
-            <div className="pay-proof-wrap">
-              {payProof ? (
-                <div className="pay-proof-preview">
-                  <img src={payProof} alt="Payment proof" />
-                  <button className="btn ghost sm" type="button" onClick={function () { setPayProof(null); }}>Remove</button>
-                </div>
-              ) : (
-                <label className="btn ghost sm proof-upload-btn" type="button">
-                  📷 Choose Image
-                  <input type="file" accept="image/*" hidden onChange={onProofFile} />
-                </label>
-              )}
-            </div>
-            <p className="pay-proof-hint">UPI screenshot ya receipt upload karo</p>
-          </div>
-          <div className="dlg-foot">
-            <button className="btn ghost sm" type="button" id="payLater" onClick={function () { closePay(); UI.toast("Payment ke bina service provide nahi ki jayegi", "bad"); }}>Pay later</button>
-            <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim()}>Payment Complete</button>
-          </div>
-        </div>
-      </div>
       <button className="scrim" id="verifyScrim" hidden aria-hidden="true" tabIndex={-1} onClick={closeVerify} />
       <div className="dlg center" id="verifyDlg" role="dialog" aria-modal="true" aria-labelledby="verifySub" hidden={!verifyOpen}>
         <div className="dlg-box verify-box">

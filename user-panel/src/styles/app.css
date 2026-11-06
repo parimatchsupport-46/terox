@@ -553,6 +553,87 @@
 
 /* payment proof upload in user panel */
 .pay-proof { padding: 0 16px 12px; }
+
+/* ==========================================================================
+   Standalone Payment page
+   ========================================================================== */
+.pay-page-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; }
+
+.pay-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pay-page .card {
+  background: var(--bg-elev);
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+/* summary */
+.pay-summary-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.pay-summary-head b { font-size: .95rem; }
+.pay-summary-head .muted { font-size: .78rem; }
+.pay-summary-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.pay-amt { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
+.pay-to { font-size: .82rem; color: var(--muted); }
+
+/* QR section */
+.pay-qr-section { text-align: center; }
+.pay-qr-large {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 12px;
+  border-radius: 12px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.pay-qr-large svg { width: 100%; height: 100%; }
+.pay-qr-large img { width: 100%; height: 100%; object-fit: contain; }
+.pay-qr-large rect { fill: #10131a; }
+.pay-qr-large rect.f { fill: none; stroke: #10131a; stroke-width: 3; }
+.pay-qr-large rect.fi { fill: #ffffff; }
+.pay-scan-hint { font-size: .78rem; color: var(--muted); margin-top: 8px; }
+
+/* form */
+.pay-form { display: flex; flex-direction: column; gap: 14px; }
+.pay-utr label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 6px; }
+.pay-utr input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .95rem;
+}
+
+/* actions */
+.pay-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.pay-actions .btn { flex: 1; }
 .pay-proof label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 6px; color: var(--fg); }
 .pay-proof-wrap { display: flex; align-items: center; gap: 8px; }
 .pay-proof-preview { display: flex; align-items: center; gap: 8px; }

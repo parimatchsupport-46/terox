@@ -9,9 +9,10 @@ import Home from "./pages/Home.jsx";
 import Chat from "./pages/Chat.jsx";
 import Profile from "./pages/Profile.jsx";
 import User from "./pages/User.jsx";
+import Payment from "./pages/Payment.jsx";
 import Login from "./pages/Login.jsx";
 
-const APP_ROUTES = /^(\/(index|chat|profile|user))?(\?|$)/;
+const APP_ROUTES = /^(\/(index|chat|profile|user|pay))?(\?|$)/;
 
 function nextFrom(search) {
   let next = "";
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/chat" element={<Guard><Chat /></Guard>} />
       <Route path="/profile" element={<Guard><Profile /></Guard>} />
       <Route path="/user" element={<Guard><User /></Guard>} />
+      <Route path="/pay" element={<Guard><Payment /></Guard>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
