@@ -78,13 +78,14 @@ const Auth = (function () {
   /* the gate only needs to know whether a session id resolves to an account:
      adopting the profile stays with current(), which is what the old page
      scripts called after the store was already in */
-  function peek() {
+  function sessionId() {
     var id = read(SES, null);
-    if (!id) return false;
+    if (!id) return null;
     var all = accounts();
-    for (var i = 0; i < all.length; i++) if (all[i].id === id) return true;
-    return false;
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return id;
+    return null;
   }
+  function peek() { return !!sessionId(); }
 
   function current() {
     var id = read(SES, null);
@@ -101,7 +102,7 @@ const Auth = (function () {
     keys: { accounts: ACC, session: SES },
     digits: digits, norm: norm, valid: valid, pretty: pretty,
     accounts: accounts, find: find, register: register, signIn: signIn,
-    current: current, peek: peek, trust: trust, signOut: signOut, forget: forget,
+    current: current, peek: peek, sessionId: sessionId, trust: trust, signOut: signOut, forget: forget,
     applyProfile: applyProfile
   };
 })();

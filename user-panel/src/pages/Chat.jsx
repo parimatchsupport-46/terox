@@ -9,6 +9,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Store from "../lib/store.js";
+import Auth from "../lib/auth.js";
+import { readVerification, finishVerification } from "../lib/verificationSession.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
 import Chrome from "../components/Chrome.jsx";
@@ -47,7 +49,9 @@ export default function Chat() {
   const [sheetAria, setSheetAria] = useState(undefined);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState("verifying"); // "verifying" | "accepted" | "rejected"
-  const [verifyReqId, setVerifyReqId] = useState(null);
+  const accountId = Auth.sessionId();
+  const [activeVerification, setActiveVerification] = useState(function () { return readVerification(accountId, uid); });
+  const handledVerification = useRef("");
 
   const thread = useRef(null);
   const sheetBtn = useRef(null);
@@ -55,7 +59,7 @@ export default function Chat() {
   const seen = useRef(0);
 
   const sheetMsg = sheetId ? Store.find(uid, sheetId) : null;
-  const latestRequest = Store.payReqForUser(uid);
+  const trackedRequest = activeVerification ? Store.payReqs().find(function (r) { return r.id === activeVerification && r.uid === uid; }) : null;
 
   document.title = user.name + " · Terox Chat";
 
@@ -66,17 +70,6 @@ export default function Chat() {
     if (last && last.from === "me" && Store.NEXT[last.kind]) Store.queueReply(uid, Store.NEXT[last.kind]);
     setSheetId(null); setSheetOn(false); setSheetScrim(false);
     seen.current = 0;
-    /* Restore pending or rejected verification when returning to the chat. */
-    var pendingReq = Store.payReqForUser(uid);
-    if (pendingReq && pendingReq.status !== "accepted") {
-      setVerifyReqId(pendingReq.id);
-      setVerifyStatus(pendingReq.status === "rejected" ? "rejected" : "verifying");
-      setVerifyOpen(true);
-    } else {
-      setVerifyReqId(null);
-      setVerifyStatus("verifying");
-      setVerifyOpen(false);
-    }
     /* no cancelReply in cleanup: a reply in progress keeps going when the
        user navigates away, so the typing bar shows on the home page too */
   }, [uid]);
@@ -154,20 +147,34 @@ export default function Chat() {
     // Keep the UTR page in browser history before the native UPI link opens.
     navigate("/pay?uid=" + encodeURIComponent(uid), { state: { payment: session } });
   }
-  function closeVerify() { setVerifyOpen(false); setVerifyStatus("verifying"); setVerifyReqId(null); }
-
-  /* Apply each accepted payment once, including when the chat is reopened. */
-  useEffect(function () {
-    if (!latestRequest) return;
-    if (latestRequest.status === "accepted") {
-      if (Store.acknowledgePayment(uid, latestRequest.id)) UI.toast("Payment verified", "ok");
-      setVerifyOpen(false);
-      setVerifyReqId(null);
-    } else if (verifyOpen && latestRequest.id === verifyReqId && latestRequest.status === "rejected" && verifyStatus !== "rejected") {
-      setVerifyStatus("rejected");
-      UI.toast("Payment rejected — fir se try karo", "bad");
+  function closeVerify() {
+    if (verifyStatus === "rejected" && activeVerification) {
+      finishVerification(accountId, uid, activeVerification);
+      setActiveVerification(null);
     }
-  }, [uid, latestRequest && latestRequest.id, latestRequest && latestRequest.status, verifyOpen, verifyReqId, verifyStatus]);
+    setVerifyOpen(false);
+  }
+
+  /* Only the current account's explicitly submitted request can open this dialog. */
+  useEffect(function () {
+    if (!trackedRequest || !activeVerification) return;
+    const state = activeVerification + ":" + trackedRequest.status;
+    if (handledVerification.current === state) return;
+    handledVerification.current = state;
+    if (trackedRequest.status === "pending") {
+      setVerifyStatus("verifying");
+      setVerifyOpen(true);
+    } else if (trackedRequest.status === "rejected") {
+      setVerifyStatus("rejected");
+      setVerifyOpen(true);
+      UI.toast("Payment rejected — fir se try karo", "bad");
+    } else if (trackedRequest.status === "accepted") {
+      if (Store.acknowledgePayment(uid, activeVerification)) UI.toast("Payment verified", "ok");
+      finishVerification(accountId, uid, activeVerification);
+      setActiveVerification(null);
+      setVerifyOpen(false);
+    }
+  }, [uid, accountId, activeVerification, trackedRequest && trackedRequest.id, trackedRequest && trackedRequest.status]);
 
   useEffect(function () {
     function key(e) { if (e.key === "Escape" && sheetOn) closeSheet(); }

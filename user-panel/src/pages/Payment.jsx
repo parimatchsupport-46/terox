@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Chrome from "../components/Chrome.jsx";
 import Store from "../lib/store.js";
+import Auth from "../lib/auth.js";
+import { beginVerification } from "../lib/verificationSession.js";
 import useStore from "../lib/useStore.js";
 import UI from "../lib/ui.js";
 import { IcoBack } from "../components/icons.jsx";
@@ -54,11 +56,16 @@ export default function Payment() {
   function completePay() {
     if (!session || !validPaymentSession(session, uid)) { UI.toast("Payment session expired. Please start again.", "bad"); return; }
     if (!payUtr.trim()) { UI.toast("UTR number fill kijiye", "bad"); return; }
-    Store.addPayReq({
-      id: "pr" + Date.now().toString(36), uid, utr: payUtr.trim(),
+    const request = {
+      id: "pr-" + (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2)), uid, utr: payUtr.trim(),
       amount: session.amount, service: session.service, plan: session.plan,
       mode: session.mode, upiId: session.upi, status: "pending", at: Date.now()
-    });
+    };
+    if (!beginVerification(Auth.sessionId(), uid, request.id)) {
+      UI.toast("Could not start verification. Please try again.", "bad");
+      return;
+    }
+    Store.addPayReq(request);
     setDone(true);
     clearPaymentSession(uid);
     window.setTimeout(function () { navigate("/chat?u=" + encodeURIComponent(uid), { replace: true }); }, 800);
