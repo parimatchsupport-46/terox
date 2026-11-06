@@ -34,18 +34,9 @@ terox/
 7. Open `firestore.rules` from this repo
 8. Copy the rules content → paste into Firebase Console → Publish
 
-## Environment Variables
+## Firebase configuration
 
-Set these in **both** Vercel projects (User Panel and Admin Panel):
-
-| Variable | Value |
-|---|---|
-| VITE_FIREBASE_API_KEY | your-firebase-api-key |
-| VITE_FIREBASE_AUTH_DOMAIN | your-project.firebaseapp.com |
-| VITE_FIREBASE_PROJECT_ID | your-project |
-| VITE_FIREBASE_STORAGE_BUCKET | your-project.appspot.com |
-| VITE_FIREBASE_MESSAGING_SENDER_ID | your-sender-id |
-| VITE_FIREBASE_APP_ID | your-app-id |
+Both panels use the same frontend Firebase web config in `user-panel/src/lib/firebase.js` and `admin-panel/src/lib/firebase.js`. No Vercel environment variables are required. To use another Firebase project, update both files and redeploy both projects. The web config is public; access must be protected by Firestore security rules.
 
 ## Vercel Deployment
 
@@ -54,20 +45,17 @@ Set these in **both** Vercel projects (User Panel and Admin Panel):
 1. **User Panel:**
    - Create new Vercel project
    - Import repo, set **Root Directory** to `user-panel`
-   - Set Environment Variables (see above)
    - Deploy → gets `user-panel-xxx.vercel.app`
 
 2. **Admin Panel:**
    - Create new Vercel project
    - Import same repo, set **Root Directory** to `admin-panel`
-   - Set Same Environment Variables
    - Deploy → gets `admin-panel-xxx.vercel.app`
 
 ### Option B: One Vercel project with rewrites
 
 1. Create one Vercel project from this repo root
-2. Set Environment Variables
-3. Use rewrites in `vercel.json` to route `/admin` to admin panel build
+2. Use rewrites in `vercel.json` to route `/admin` to admin panel build
 
 ## Firestore Rules
 

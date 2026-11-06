@@ -1,24 +1,14 @@
-/* ==========================================================================
-   firebase.js — Firebase initialization for Terox.
-   Reads config from Vite env vars (VITE_FIREBASE_*).
-   Set these in Vercel project settings → Environment Variables:
-     VITE_FIREBASE_API_KEY
-     VITE_FIREBASE_AUTH_DOMAIN
-     VITE_FIREBASE_PROJECT_ID
-     VITE_FIREBASE_STORAGE_BUCKET
-     VITE_FIREBASE_MESSAGING_SENDER_ID
-     VITE_FIREBASE_APP_ID
-   ========================================================================== */
+/* Shared Firebase project configuration for both panels. */
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, getDocs, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
+  apiKey: "AIzaSyDC4LHwTGhLMF0ldHjOHAkglWhvk43Ek9M",
+  authDomain: "terox-chat.firebaseapp.com",
+  projectId: "terox-chat",
+  storageBucket: "terox-chat.firebasestorage.app",
+  messagingSenderId: "657285047009",
+  appId: "1:657285047009:web:e7b77af926dfab08070da0"
 };
 
 const app = initializeApp(firebaseConfig);
