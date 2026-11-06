@@ -456,6 +456,35 @@
 .pay-rows dd { margin: 0; font-size: 13px; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 .dlg-foot { display: flex; gap: 8px; margin-top: 12px; }
 .dlg-foot .btn { flex: 1; }
+
+/* pay timer bar */
+.pay-timer-bar { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12.5px; color: var(--muted); }
+.pay-timer-ic { font-size: 13px; }
+.pay-timer-txt { letter-spacing: 0.02em; }
+.pay-timer { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+
+/* UTR input */
+.pay-utr { display: grid; gap: 6px; margin-top: 12px; }
+.pay-utr label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.pay-utr input { width: 100%; min-height: 44px; padding: 10px 12px; font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; text-align: center; letter-spacing: 0.04em; text-transform: uppercase; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
+.pay-utr input::placeholder { text-transform: none; letter-spacing: 0; color: var(--muted); opacity: 0.8; }
+.pay-utr input:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.25); }
+
+/* disabled pay button */
+.dlg-foot .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+/* centered dialog (verification) */
+.dlg.center { align-items: center; padding: 16px; }
+.verify-box { max-width: 320px; margin: 0 auto; text-align: center; }
+.verify-spinner { display: flex; justify-content: center; margin: 6px 0 12px; }
+.verify-spinner .spinner-dots { gap: 5px; }
+.verify-spinner .dot { width: 9px; height: 9px; background: var(--accent); }
+#verifyScrim { z-index: 69; }
+#verifyScrim[hidden] { display: none; }
+#verifyScrim.show { opacity: 1; }
+.verify-box b { display: block; font-size: 15px; margin-bottom: 6px; }
+.verify-sub { margin: 0 0 14px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
 @media (max-width: 360px) {
   .pay-body { flex-direction: column; }
   .pay-qr { width: 100%; height: auto; aspect-ratio: 1; }

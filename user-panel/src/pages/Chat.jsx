@@ -83,6 +83,9 @@ export default function Chat() {
   const [sheetAria, setSheetAria] = useState(undefined);
   const [payOpen, setPayOpen] = useState(false);
   const [payMsg, setPayMsg] = useState(null);
+  const [payUtr, setPayUtr] = useState("");
+  const [paySecs, setPaySecs] = useState(900);
+  const [verifyOpen, setVerifyOpen] = useState(false);
 
   const thread = useRef(null);
   const area = useRef(null);
@@ -102,7 +105,7 @@ export default function Chat() {
     const p = picksOf(Store.thread(uid).messages);
     if (step === "services") Store.receive(uid, "Select your type options", { kind: "services" });
     if (step === "rates") Store.receive(uid, "Select your plan below", { kind: "rates", pick: { key: p.key, svc: p.svc, sec: p.sec } });
-    if (step === "pay") Store.receive(uid, "Payment kijiye — payment ke bina service start nahi hogi.", { kind: "pay", pick: { d: p.d, svc: p.svc, mode: p.mode, key: p.key, amount: p.amount } });
+    if (step === "pay") Store.receive(uid, "Please complete the payment to start the service.", { kind: "pay", pick: { d: p.d, svc: p.svc, mode: p.mode, key: p.key, amount: p.amount } });
     if (step === "ack") Store.receive(uid, "Payment mil gaya ✅ " + (p.mode || "Call") + " · " + (p.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
   }
 
@@ -250,20 +253,30 @@ export default function Chat() {
   }
 
   /* ---------- payment dialog ---------- */
-  function openPay(m) { setPayMsg(m); setPayOpen(true); document.body.classList.add("locked"); }
-  function closePay() { setPayOpen(false); setPayMsg(null); document.body.classList.remove("locked"); }
-  function paid() {
-    const p = (payMsg && payMsg.pick) || {};
+  function openPay(m) { setPayMsg(m); setPayUtr(""); setPaySecs(900); setPayOpen(true); document.body.classList.add("locked"); }
+  function closePay() { setPayOpen(false); setPayMsg(null); setPayUtr(""); document.body.classList.remove("locked"); }
+  function mmss(s) { var m = Math.floor(s / 60); var r = s % 60; return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r; }
+  /* tapping "Payment Complete" (UTR must be filled) closes the pay dialog
+     and opens the verification popup. The actual confirm-ack comes later once
+     the admin panel verifies the payment. */
+  function completePay() {
+    if (!payUtr || !payUtr.trim()) { UI.toast("UTR number fill kijiye", "bad"); return; }
     closePay();
-    sendPick("Payment kar diya ✅", "paid", { mode: p.mode, key: p.key, d: p.d, amount: p.amount });
-    UI.toast("Bhej diya — " + first + " confirm karenge", "ok");
+    setVerifyOpen(true);
   }
+  function closeVerify() { setVerifyOpen(false); }
 
   useEffect(function () {
     function key(e) { if (e.key === "Escape") { if (payOpen) closePay(); else if (sheetOn) closeSheet(); } }
     document.addEventListener("keydown", key);
     return function () { document.removeEventListener("keydown", key); };
   }, [payOpen, sheetOn]);
+  /* countdown timer while the pay dialog is open (15-min QR validity) */
+  useEffect(function () {
+    if (!payOpen) return;
+    var t = setInterval(function () { setPaySecs(function (s) { return s > 0 ? s - 1 : 0; }); }, 1000);
+    return function () { clearInterval(t); };
+  }, [payOpen]);
   useEffect(function () { return function () { document.body.classList.remove("locked"); }; }, []);
 
   function jumpTo(id) {
@@ -334,7 +347,7 @@ export default function Chat() {
           })}
         </div>
         <button className="pay-now" type="button" onClick={function (e) { e.stopPropagation(); openPay(m); }}>{"Pay now " + (p.amount || "")}</button>
-        <p className="opts-n">QR scan karke payment kijiye, phir “I’ve paid” dabaiye.</p>
+        <p className="opts-n">Scan the QR to pay. Fill the UTR number and tap Payment Complete.</p>
       </div>
     );
   }
@@ -429,10 +442,28 @@ export default function Chat() {
               <div><dt>Amount</dt><dd id="payAmount">{pay.amount || "—"}</dd></div>
             </dl>
           </div>
+          <div className="pay-timer-bar">
+            <span className="pay-timer-ic">⏰</span>
+            <span className="pay-timer-txt">Payment valid for</span>
+            <span className="pay-timer" id="payTimer">{mmss(paySecs)}</span>
+          </div>
+          <div className="pay-utr">
+            <label htmlFor="payUtrInput">UTR Number</label>
+            <input id="payUtrInput" type="text" value={payUtr} onChange={function (e) { setPayUtr(e.target.value); }} placeholder="Enter UTR Number" autoComplete="off" inputMode="text" />
+          </div>
           <div className="dlg-foot">
             <button className="btn ghost sm" type="button" id="payLater" onClick={function () { closePay(); UI.toast("Payment ke bina service provide nahi ki jayegi", "bad"); }}>Pay later</button>
-            <button className="btn sm" type="button" id="payDone" onClick={paid}>I’ve paid</button>
+            <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim()}>Payment Complete</button>
           </div>
+        </div>
+      </div>
+      <button className="scrim" id="verifyScrim" hidden aria-hidden="true" tabIndex={-1} onClick={closeVerify} />
+      <div className="dlg center" id="verifyDlg" role="dialog" aria-modal="true" aria-labelledby="verifySub" hidden={!verifyOpen}>
+        <div className="dlg-box verify-box">
+          <div className="verify-spinner"><span className="spinner-dots"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span></div>
+          <b id="verifySub">Payment Verification in Progress...</b>
+          <p className="verify-sub">Your payment is being verified. Please wait, this may take a moment.</p>
+          <button className="btn ghost sm" type="button" id="verifyClose" onClick={closeVerify}>Close</button>
         </div>
       </div>
     </>

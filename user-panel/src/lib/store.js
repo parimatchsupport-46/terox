@@ -28,7 +28,7 @@ const Store = (function () {
       },
       {
         "id": "aarav",
-        "name": "Aarav Sharma",
+        "name": "Aanya Sharma",
         "username": "aarav",
         "bio": "Product Designer. Radius 6px or nothing.",
         "photo": "a05.jpg",
@@ -37,7 +37,7 @@ const Store = (function () {
       },
       {
         "id": "kabir",
-        "name": "Kabir Nanda",
+        "name": "Kavya Nanda",
         "username": "kabirn",
         "bio": "Backend. Patch bhej raha hoon, review kar lena.",
         "photo": "a06.jpg",
@@ -64,7 +64,7 @@ const Store = (function () {
       },
       {
         "id": "dev",
-        "name": "Dev Rajput",
+        "name": "Disha Rajput",
         "username": "devr",
         "bio": "Android. Side se koi issue nahi aaya.",
         "photo": "a07.jpg",
@@ -82,7 +82,7 @@ const Store = (function () {
       },
       {
         "id": "harsh",
-        "name": "Harsh Vardhan",
+        "name": "Himadri Vardhan",
         "username": "harshv",
         "bio": "Support. 2 tickets pending hain, kal dekh lena.",
         "photo": "a08.jpg",
@@ -100,7 +100,7 @@ const Store = (function () {
       },
       {
         "id": "rohitn",
-        "name": "Rohit Nair",
+        "name": "Rohini Nair",
         "username": "rohitn",
         "bio": "Mobile. Android side se build green hai.",
         "photo": "a10.jpg",
@@ -118,7 +118,7 @@ const Store = (function () {
       },
       {
         "id": "adityar",
-        "name": "Aditya Rao",
+        "name": "Aditi Rao",
         "username": "adityar",
         "bio": "Data. Dashboard numbers recalibrate ho gaye.",
         "photo": "a12.jpg",
@@ -136,7 +136,7 @@ const Store = (function () {
       },
       {
         "id": "farhanq",
-        "name": "Farhan Qureshi",
+        "name": "Fatima Qureshi",
         "username": "farhanq",
         "bio": "DevOps. Rollback nahi karna pada, sab thik.",
         "photo": "a14.jpg",
@@ -154,7 +154,7 @@ const Store = (function () {
       },
       {
         "id": "manavg",
-        "name": "Manav Grover",
+        "name": "Manvi Grover",
         "username": "manavg",
         "bio": "Security. Dependabot alerts 4 -> 0.",
         "photo": "a16.jpg",
@@ -172,7 +172,7 @@ const Store = (function () {
       },
       {
         "id": "kunalm",
-        "name": "Kunal Verma",
+        "name": "Komal Verma",
         "username": "kunalm",
         "bio": "Frontend. Shadow bhi same: 0 8px 30px.",
         "photo": "a18.jpg",
@@ -190,7 +190,7 @@ const Store = (function () {
       },
       {
         "id": "vikrams",
-        "name": "Vikram Sethi",
+        "name": "Vibha Sethi",
         "username": "vikrams",
         "bio": "Payments. Gateway timeout replay nahi hoga.",
         "photo": "a20.jpg",
@@ -208,7 +208,7 @@ const Store = (function () {
       },
       {
         "id": "sidj",
-        "name": "Siddharth Joshi",
+        "name": "Siddhi Joshi",
         "username": "sidj",
         "bio": "Platform. Rate limit 200/min pe set.",
         "photo": "a22.jpg",
@@ -235,7 +235,7 @@ const Store = (function () {
       },
       {
         "id": "arjunr",
-        "name": "Arjun Reddy",
+        "name": "Arya Reddy",
         "username": "arjunr",
         "bio": "iOS. TestFlight build 214 live.",
         "photo": "a25.jpg",
@@ -253,7 +253,7 @@ const Store = (function () {
       },
       {
         "id": "yashp",
-        "name": "Yash Patwardhan",
+        "name": "Yasmin Patwardhan",
         "username": "yashp",
         "bio": "Growth. Retention 1.8pt up this week.",
         "photo": "a27.jpg",
@@ -271,7 +271,7 @@ const Store = (function () {
       },
       {
         "id": "kabirs",
-        "name": "Kabir Saxena",
+        "name": "Karishma Saxena",
         "username": "kabirs",
         "bio": "Backend. Patch bhej raha hoon, ek din me.",
         "photo": "a29.jpg",
@@ -289,7 +289,7 @@ const Store = (function () {
       },
       {
         "id": "rehanm",
-        "name": "Rehan Mirza",
+        "name": "Reema Mirza",
         "username": "rehanm",
         "bio": "Infra. Node 20 upgrade smooth tha.",
         "photo": "a31.jpg",
@@ -307,7 +307,7 @@ const Store = (function () {
       },
       {
         "id": "devansh",
-        "name": "Devansh Gupta",
+        "name": "Devanshi Gupta",
         "username": "devansh",
         "bio": "Frontend. Zoom lock test ho gaya.",
         "photo": "a33.jpg",
@@ -325,7 +325,7 @@ const Store = (function () {
       },
       {
         "id": "omprakash",
-        "name": "Om Prakash Rao",
+        "name": "Oindrilla Rao",
         "username": "omprakash",
         "bio": "QA. Regression suite 46 min me pass.",
         "photo": "a35.jpg",
