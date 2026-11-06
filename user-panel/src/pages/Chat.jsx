@@ -30,11 +30,7 @@ const SECTIONS = [
   { name: "Voice calling", key: "v" },
   { name: "Video calling", key: "x" }
 ];
-const NOTES = [
-  "❌ Free proof available nahi hain.",
-  "✅ QR code se payment — payment ke bina koi service provide nahi ki jayegi.",
-  "❤️ Thank You!"
-];
+const NOTES = [];
 
 const FIRST_WAIT = 4000;
 const NEXT_WAIT = 500;
@@ -104,8 +100,8 @@ export default function Chat() {
   /* ---------- the scripted beat ---------- */
   function send(step) {
     const p = picksOf(Store.thread(uid).messages);
-    if (step === "services") Store.receive(uid, "Apna service chuniye — Call ya Video Call 👇", { kind: "services" });
-    if (step === "rates") Store.receive(uid, "Rate card 👇 niche se apna plan tap kar dijiye.", { kind: "rates", pick: { key: p.key, svc: p.svc, sec: p.sec } });
+    if (step === "services") Store.receive(uid, "Select your type options", { kind: "services" });
+    if (step === "rates") Store.receive(uid, "Select your plan below", { kind: "rates", pick: { key: p.key, svc: p.svc, sec: p.sec } });
     if (step === "pay") Store.receive(uid, "Payment kijiye — payment ke bina service start nahi hogi.", { kind: "pay", pick: { d: p.d, svc: p.svc, mode: p.mode, key: p.key, amount: p.amount } });
     if (step === "ack") Store.receive(uid, "Payment mil gaya ✅ " + (p.mode || "Call") + " · " + (p.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
   }
@@ -299,7 +295,6 @@ export default function Chat() {
         </button>
       );
     });
-    NOTES.forEach(function (n) { kids.push(<p className="opts-n" key={n}>{n}</p>); });
     return <div className="opts">{kids}</div>;
   }
 
@@ -321,11 +316,9 @@ export default function Chat() {
             }}>
               <span className="ic">{o.ic}</span>
               <span className="lbl">{o.name}</span>
-              <span className="price">{price("10 min", o.key)}</span>
             </button>
           );
         })}
-        <p className="opts-n">Aage ke step aapke chune hue service par depend kareinge.</p>
       </div>
     );
   }
