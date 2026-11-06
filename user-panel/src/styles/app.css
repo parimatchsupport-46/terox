@@ -551,9 +551,6 @@
 .proof-box .proof-img-wrap { padding: 12px; background: var(--bg); border-radius: 10px; text-align: center; }
 .proof-box .proof-img-wrap img { max-width: 100%; max-height: 300px; border-radius: 8px; }
 
-/* payment proof upload in user panel */
-.pay-proof { padding: 0 16px 12px; }
-
 /* ==========================================================================
    Standalone Payment page
    ========================================================================== */
@@ -634,12 +631,6 @@
   margin-top: 4px;
 }
 .pay-actions .btn { flex: 1; }
-.pay-proof label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 6px; color: var(--fg); }
-.pay-proof-wrap { display: flex; align-items: center; gap: 8px; }
-.pay-proof-preview { display: flex; align-items: center; gap: 8px; }
-.pay-proof-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
-.proof-upload-btn { cursor: pointer; }
-.pay-proof-hint { font-size: .72rem; color: var(--muted); margin-top: 4px; }
 
 /* verify modal states */
 .verify-icon { font-size: 2.5rem; text-align: center; margin: 8px 0; }

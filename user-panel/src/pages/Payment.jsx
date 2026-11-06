@@ -20,7 +20,6 @@ export default function Payment() {
   const user = Store.user(uid);
 
   const [payUtr, setPayUtr] = useState("");
-  const [payProof, setPayProof] = useState(null);
   const [paySecs, setPaySecs] = useState(900);
   const [done, setDone] = useState(false);
   const timerRef = useRef(null);
@@ -59,16 +58,6 @@ export default function Payment() {
     navigate("/chat?u=" + encodeURIComponent(uid));
   }
 
-  function onProofFile(e) {
-    var f = e.target.files[0];
-    if (!f) return;
-    if (f.size > 5 * 1024 * 1024) { UI.toast("Image too large — max 5MB", "bad"); return; }
-    var reader = new FileReader();
-    reader.onload = function () { setPayProof(reader.result); };
-    reader.readAsDataURL(f);
-    e.target.value = "";
-  }
-
   function completePay() {
     if (!payUtr || !payUtr.trim()) { UI.toast("UTR number fill kijiye", "bad"); return; }
     var req = {
@@ -79,7 +68,6 @@ export default function Payment() {
       service: service,
       plan: plan,
       mode: mode,
-      proof: payProof || null,
       status: "pending",
       at: Date.now()
     };
@@ -154,23 +142,6 @@ export default function Payment() {
               autoComplete="off"
               disabled={done}
             />
-          </div>
-          <div className="pay-proof">
-            <label>Payment Proof (screenshot upload)</label>
-            <div className="pay-proof-wrap">
-              {payProof ? (
-                <div className="pay-proof-preview">
-                  <img src={payProof} alt="Payment proof" />
-                  <button className="btn ghost sm" type="button" onClick={function () { setPayProof(null); }}>Remove</button>
-                </div>
-              ) : (
-                <label className="btn ghost sm proof-upload-btn" type="button">
-                  📷 Choose Image
-                  <input type="file" accept="image/*" hidden onChange={onProofFile} />
-                </label>
-              )}
-            </div>
-            <p className="pay-proof-hint">UPI screenshot ya receipt upload karo</p>
           </div>
         </div>
 
