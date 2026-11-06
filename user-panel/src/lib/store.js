@@ -635,6 +635,68 @@ const Store = (function () {
     window.dispatchEvent(new Event("terox:change"));
   }
 
+  /* ---------------- payment requests (admin panel verifies) ----------------
+     A user fills the UTR number and uploads a payment proof image, then taps
+     "Payment Complete". That creates a pending request here. The admin panel
+     reads these from its Payment Manager page and accepts or rejects each one.
+     The user's verification popup stays open until the request is resolved. */
+  var PAY_KEY = "terox.payreq.v1";
+  function payReqs() {
+    var stored = read(PAY_KEY, null);
+    return Array.isArray(stored) ? stored : [];
+  }
+  function savePayReqs(next) {
+    write(PAY_KEY, next);
+    emit();
+    return next;
+  }
+  function addPayReq(req) {
+    var next = payReqs().concat([req]);
+    savePayReqs(next);
+    return req;
+  }
+  function updatePayReq(id, status) {
+    var next = payReqs().map(function (r) {
+      if (r.id !== id) return r;
+      var r2 = {};
+      for (var k in r) r2[k] = r[k];
+      r2.status = status;
+      r2.resolvedAt = Date.now();
+      return r2;
+    });
+    savePayReqs(next);
+    return next.filter(function (r) { return r.id === id; })[0] || null;
+  }
+  function removePayReq(id) {
+    var next = payReqs().filter(function (r) { return r.id !== id; });
+    savePayReqs(next);
+    return next;
+  }
+  function pendingPayReqs() {
+    return payReqs().filter(function (r) { return r.status === "pending"; });
+  }
+  function payReqForUser(uid) {
+    var all = payReqs();
+    for (var i = all.length - 1; i >= 0; i--) {
+      if (all[i].uid === uid) return all[i];
+    }
+    return null;
+  }
+  function userStats(uid) {
+    var t = thread(uid);
+    var msgs = t.messages || [];
+    var chatted = msgs.length > 0;
+    var paid = false;
+    var pending = false;
+    var reqs = payReqs().filter(function (r) { return r.uid === uid; });
+    reqs.forEach(function (r) {
+      if (r.status === "accepted") paid = true;
+      if (r.status === "pending") pending = true;
+    });
+    var utr = reqs.some(function (r) { return r.status === "pending" || r.status === "accepted"; });
+    return { chatted: chatted, messages: msgs.length, paid: paid, pending: pending, utr: utr, lastAt: lastAt(chats(), uid) };
+  }
+
   /* ---------- global reply scheduling + typing (survives navigation) ---------- */
   var NEXT = { start: "services", "pick-service": "rates", "pick-plan": "pay", "pick-type": "pay", paid: "ack" };
   var PENDING = { services: "services", rates: "rates", pay: "pay" };
@@ -733,7 +795,9 @@ const Store = (function () {
     queueReply: queueReply, cancelReply: cancelReply, cancelAllReplies: cancelAllReplies,
     setTyping: setTyping, typingOn: typingOn, typingName: typingName,
     RATE: RATE, SECTIONS: SECTIONS, price: price, picksOf: picksOf, money: money,
-    NEXT: NEXT, PENDING: PENDING
+    NEXT: NEXT, PENDING: PENDING,
+    payReqs: payReqs, addPayReq: addPayReq, updatePayReq: updatePayReq, removePayReq: removePayReq,
+    pendingPayReqs: pendingPayReqs, payReqForUser: payReqForUser, userStats: userStats
   };
 })();
 

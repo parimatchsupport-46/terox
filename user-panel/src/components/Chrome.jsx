@@ -39,7 +39,7 @@ export default function Chrome({ full, bar, bodyStyle, overlays, children }) {
   const last = useRef(null);
 
   const p = Store.profile();
-  const here = loc.pathname === "/chat" ? "chat" : loc.pathname === "/profile" ? "profile" : "home";
+  const here = loc.pathname === "/chat" ? "chat" : loc.pathname === "/profile" ? "profile" : loc.pathname === "/admin" ? "admin" : "home";
 
   function on() {
     last.current = document.activeElement;
@@ -117,6 +117,10 @@ export default function Chrome({ full, bar, bodyStyle, overlays, children }) {
           <Link to="/profile" data-nav="profile" className={here === "profile" ? "active" : undefined} aria-current={here === "profile" ? "page" : undefined} onClick={go}>
             <IcoNavProfile />
             Profile
+          </Link>
+          <Link to="/admin" data-nav="admin" className={here === "admin" ? "active" : undefined} aria-current={here === "admin" ? "page" : undefined} onClick={go}>
+            <IcoMenu />
+            Admin
           </Link>
         </nav>
         <div className="drawer-foot">

@@ -46,8 +46,11 @@ export default function Chat() {
   const [payOpen, setPayOpen] = useState(false);
   const [payMsg, setPayMsg] = useState(null);
   const [payUtr, setPayUtr] = useState("");
+  const [payProof, setPayProof] = useState(null);
   const [paySecs, setPaySecs] = useState(900);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyStatus, setVerifyStatus] = useState("verifying"); // "verifying" | "accepted" | "rejected"
+  const [verifyReqId, setVerifyReqId] = useState(null);
 
   const thread = useRef(null);
   const area = useRef(null);
@@ -71,6 +74,31 @@ export default function Chat() {
     setSheetId(null); setSheetOn(false); setSheetScrim(false);
     setPayMsg(null); setPayOpen(false);
     seen.current = 0;
+    /* restore a pending payment verification if the user navigates back */
+    var pendingReq = Store.payReqForUser(uid);
+    if (pendingReq) {
+      setVerifyReqId(pendingReq.id);
+      if (pendingReq.status === "accepted") {
+        setVerifyStatus("accepted");
+        setVerifyOpen(true);
+        var threadMsgs = Store.thread(uid).messages;
+        var hasAck = threadMsgs.some(function (m) { return m.kind === "ack"; });
+        if (!hasAck) {
+          var p2 = Store.picksOf(threadMsgs);
+          Store.receive(uid, "Payment mil gaya ✅ " + (p2.mode || "Call") + " · " + (p2.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
+        }
+      } else if (pendingReq.status === "rejected") {
+        setVerifyStatus("rejected");
+        setVerifyOpen(true);
+      } else {
+        setVerifyStatus("verifying");
+        setVerifyOpen(true);
+      }
+    } else {
+      setVerifyReqId(null);
+      setVerifyStatus("verifying");
+      setVerifyOpen(false);
+    }
     /* no cancelReply in cleanup: a reply in progress keeps going when the
        user navigates away, so the typing bar shows on the home page too */
   }, [uid]);
@@ -193,18 +221,77 @@ export default function Chat() {
   }
 
   /* ---------- payment dialog ---------- */
-  function openPay(m) { setPayMsg(m); setPayUtr(""); setPaySecs(900); setPayOpen(true); document.body.classList.add("locked"); }
+  function openPay(m) { setPayMsg(m); setPayUtr(""); setPayProof(null); setPaySecs(900); setPayOpen(true); document.body.classList.add("locked"); }
   function closePay() { setPayOpen(false); setPayMsg(null); setPayUtr(""); document.body.classList.remove("locked"); }
   function mmss(s) { var m = Math.floor(s / 60); var r = s % 60; return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r; }
-  /* tapping "Payment Complete" (UTR must be filled) closes the pay dialog
-     and opens the verification popup. The actual confirm-ack comes later once
-     the admin panel verifies the payment. */
+  /* tapping "Payment Complete" (UTR must be filled) creates a payment request
+     in the store, closes the pay dialog and opens the verification popup.
+     The popup stays open until the admin panel accepts or rejects the request. */
   function completePay() {
     if (!payUtr || !payUtr.trim()) { UI.toast("UTR number fill kijiye", "bad"); return; }
+    var p = (payMsg && payMsg.pick) || {};
+    var req = {
+      id: "pr" + Date.now().toString(36),
+      uid: uid,
+      utr: payUtr.trim(),
+      amount: p.amount || "",
+      service: p.mode || p.svc || "",
+      plan: p.d || "",
+      mode: p.mode || "",
+      proof: payProof || null,
+      status: "pending",
+      at: Date.now()
+    };
+    Store.addPayReq(req);
+    setVerifyReqId(req.id);
+    setVerifyStatus("verifying");
     closePay();
     setVerifyOpen(true);
   }
-  function closeVerify() { setVerifyOpen(false); }
+  function closeVerify() { setVerifyOpen(false); setVerifyStatus("verifying"); setVerifyReqId(null); }
+
+  /* poll the store for the payment request status while the verify popup is
+     open. When the admin accepts or rejects, update the popup and send the
+     confirm-ack message. */
+  useEffect(function () {
+    if (!verifyOpen || !verifyReqId) return undefined;
+    var req = Store.payReqs().filter(function (r) { return r.id === verifyReqId; })[0];
+    if (!req) return undefined;
+    if (req.status !== "pending" && req.status !== verifyStatus) {
+      setVerifyStatus(req.status);
+      if (req.status === "accepted") {
+        UI.toast("Payment verified ✅", "good");
+        var picks2 = Store.picksOf(Store.thread(uid).messages);
+        Store.receive(uid, "Payment mil gaya ✅ " + (picks2.mode || "Call") + " · " + (picks2.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
+      } else if (req.status === "rejected") {
+        UI.toast("Payment rejected — fir se try karo", "bad");
+      }
+    }
+    var t = setInterval(function () {
+      var r = Store.payReqs().filter(function (x) { return x.id === verifyReqId; })[0];
+      if (r && r.status !== "pending" && r.status !== verifyStatus) {
+        setVerifyStatus(r.status);
+        if (r.status === "accepted") {
+          UI.toast("Payment verified ✅", "good");
+          var p2 = Store.picksOf(Store.thread(uid).messages);
+          Store.receive(uid, "Payment mil gaya ✅ " + (p2.mode || "Call") + " · " + (p2.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
+        } else if (r.status === "rejected") {
+          UI.toast("Payment rejected — fir se try karo", "bad");
+        }
+      }
+    }, 1500);
+    return function () { clearInterval(t); };
+  }, [verifyOpen, verifyReqId, verifyStatus]);
+
+  function onProofFile(e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) { UI.toast("Image hi upload karo", "bad"); return; }
+    if (f.size > 5 * 1024 * 1024) { UI.toast("Image 5MB se kam honi chahiye", "bad"); return; }
+    var reader = new FileReader();
+    reader.onload = function () { setPayProof(reader.result); };
+    reader.readAsDataURL(f);
+  }
 
   useEffect(function () {
     function key(e) { if (e.key === "Escape") { if (payOpen) closePay(); else if (sheetOn) closeSheet(); } }
@@ -391,6 +478,23 @@ export default function Chat() {
             <label htmlFor="payUtrInput">UTR Number</label>
             <input id="payUtrInput" type="text" value={payUtr} onChange={function (e) { setPayUtr(e.target.value); }} placeholder="Enter UTR Number" autoComplete="off" inputMode="text" />
           </div>
+          <div className="pay-proof">
+            <label>Payment Proof (screenshot upload)</label>
+            <div className="pay-proof-wrap">
+              {payProof ? (
+                <div className="pay-proof-preview">
+                  <img src={payProof} alt="Payment proof" />
+                  <button className="btn ghost sm" type="button" onClick={function () { setPayProof(null); }}>Remove</button>
+                </div>
+              ) : (
+                <label className="btn ghost sm proof-upload-btn" type="button">
+                  📷 Choose Image
+                  <input type="file" accept="image/*" hidden onChange={onProofFile} />
+                </label>
+              )}
+            </div>
+            <p className="pay-proof-hint">UPI screenshot ya receipt upload karo</p>
+          </div>
           <div className="dlg-foot">
             <button className="btn ghost sm" type="button" id="payLater" onClick={function () { closePay(); UI.toast("Payment ke bina service provide nahi ki jayegi", "bad"); }}>Pay later</button>
             <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim()}>Payment Complete</button>
@@ -400,9 +504,27 @@ export default function Chat() {
       <button className="scrim" id="verifyScrim" hidden aria-hidden="true" tabIndex={-1} onClick={closeVerify} />
       <div className="dlg center" id="verifyDlg" role="dialog" aria-modal="true" aria-labelledby="verifySub" hidden={!verifyOpen}>
         <div className="dlg-box verify-box">
-          <div className="verify-spinner"><span className="spinner-dots"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span></div>
-          <b id="verifySub">Payment Verification in Progress...</b>
-          <p className="verify-sub">Your payment is being verified. Please wait, this may take a moment.</p>
+          {verifyStatus === "verifying" && (
+            <>
+              <div className="verify-spinner"><span className="spinner-dots"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span></div>
+              <b id="verifySub">Payment Verification in Progress...</b>
+              <p className="verify-sub">Your payment is being verified. Please wait, this may take a moment.</p>
+            </>
+          )}
+          {verifyStatus === "accepted" && (
+            <>
+              <div className="verify-icon verify-ok">✅</div>
+              <b id="verifySub">Payment Verified!</b>
+              <p className="verify-sub">Your payment has been verified. Service is starting now.</p>
+            </>
+          )}
+          {verifyStatus === "rejected" && (
+            <>
+              <div className="verify-icon verify-bad">❌</div>
+              <b id="verifySub">Payment Rejected</b>
+              <p className="verify-sub">Your payment was rejected. Please try again with correct details.</p>
+            </>
+          )}
           <button className="btn ghost sm" type="button" id="verifyClose" onClick={closeVerify}>Close</button>
         </div>
       </div>

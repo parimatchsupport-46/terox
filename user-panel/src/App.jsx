@@ -10,6 +10,7 @@ import Chat from "./pages/Chat.jsx";
 import Profile from "./pages/Profile.jsx";
 import User from "./pages/User.jsx";
 import Login from "./pages/Login.jsx";
+import Admin from "./pages/Admin.jsx";
 
 const APP_ROUTES = /^(\/(index|chat|profile|user))?(\?|$)/;
 
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/chat" element={<Guard><Chat /></Guard>} />
       <Route path="/profile" element={<Guard><Profile /></Guard>} />
       <Route path="/user" element={<Guard><User /></Guard>} />
+      <Route path="/admin" element={<Guard><Admin /></Guard>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
