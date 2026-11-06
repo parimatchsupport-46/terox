@@ -53,7 +53,7 @@ function syncToFirestore(event) {
     var promises = [];
     KEYS.forEach(function (key) {
       var val = localStorage.getItem(key);
-      if (val === null) return;
+      if (val === null || key === "terox.users.v1") return;
       promises.push(
         setDoc(doc(db, "data", key), { value: JSON.parse(val) })
           .catch(function (e) { console.warn("[Terox] Firestore sync failed for", key, ":", e.message || e); })

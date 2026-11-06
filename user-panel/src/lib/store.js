@@ -19,7 +19,7 @@ const Store = (function () {
   var SEED_USERS =     [
       {
         "id": "meera",
-        "name": "Meera Iyer",
+        "name": "Priya",
         "username": "meeraiyer",
         "bio": "Frontend Lead. Ships the CSS, breaks the build, fixes the build.",
         "photo": "a01.jpg",
@@ -28,7 +28,7 @@ const Store = (function () {
       },
       {
         "id": "aarav",
-        "name": "Aanya Sharma",
+        "name": "Anjali",
         "username": "aarav",
         "bio": "Product Designer. Radius 6px or nothing.",
         "photo": "a05.jpg",
@@ -37,7 +37,7 @@ const Store = (function () {
       },
       {
         "id": "kabir",
-        "name": "Kavya Nanda",
+        "name": "Pooja",
         "username": "kabirn",
         "bio": "Backend. Patch bhej raha hoon, review kar lena.",
         "photo": "a06.jpg",
@@ -46,7 +46,7 @@ const Store = (function () {
       },
       {
         "id": "zoya",
-        "name": "Zoya Khan",
+        "name": "Neha",
         "username": "zoyak",
         "bio": "QA. Zoom lock, tap targets, dark mode \u2014 sab test kiya.",
         "photo": "a02.jpg",
@@ -55,7 +55,7 @@ const Store = (function () {
       },
       {
         "id": "nafisa",
-        "name": "Nafisa Rahman",
+        "name": "Sneha",
         "username": "nafisa",
         "bio": "Marketing. Launch copy ready hai.",
         "photo": "a03.jpg",
@@ -64,7 +64,7 @@ const Store = (function () {
       },
       {
         "id": "dev",
-        "name": "Disha Rajput",
+        "name": "Simran",
         "username": "devr",
         "bio": "Android. Side se koi issue nahi aaya.",
         "photo": "a07.jpg",
@@ -73,7 +73,7 @@ const Store = (function () {
       },
       {
         "id": "priya",
-        "name": "Priya Menon",
+        "name": "Riya",
         "username": "priyam",
         "bio": "Data. Dashboard numbers calibrate ho gaye.",
         "photo": "a04.jpg",
@@ -82,7 +82,7 @@ const Store = (function () {
       },
       {
         "id": "harsh",
-        "name": "Himadri Vardhan",
+        "name": "Shivani",
         "username": "harshv",
         "bio": "Support. 2 tickets pending hain, kal dekh lena.",
         "photo": "a08.jpg",
@@ -91,7 +91,7 @@ const Store = (function () {
       },
       {
         "id": "tanvid",
-        "name": "Tanvi Deshpande",
+        "name": "Divya",
         "username": "tanvid",
         "bio": "QA. Report bhej diya, triage kar lena.",
         "photo": "a09.jpg",
@@ -100,7 +100,7 @@ const Store = (function () {
       },
       {
         "id": "rohitn",
-        "name": "Rohini Nair",
+        "name": "Khushi",
         "username": "rohitn",
         "bio": "Mobile. Android side se build green hai.",
         "photo": "a10.jpg",
@@ -109,7 +109,7 @@ const Store = (function () {
       },
       {
         "id": "snehap",
-        "name": "Sneha Pillai",
+        "name": "Nisha",
         "username": "snehap",
         "bio": "Content. Copy ready, tone soft kiya thoda.",
         "photo": "a11.jpg",
@@ -118,7 +118,7 @@ const Store = (function () {
       },
       {
         "id": "adityar",
-        "name": "Aditi Rao",
+        "name": "Komal",
         "username": "adityar",
         "bio": "Data. Dashboard numbers recalibrate ho gaye.",
         "photo": "a12.jpg",
@@ -127,7 +127,7 @@ const Store = (function () {
       },
       {
         "id": "ishitab",
-        "name": "Ishita Banerjee",
+        "name": "Payal",
         "username": "ishitab",
         "bio": "Design. Figma me spacing fix hai, dekh lena.",
         "photo": "a13.jpg",
@@ -136,7 +136,7 @@ const Store = (function () {
       },
       {
         "id": "farhanq",
-        "name": "Fatima Qureshi",
+        "name": "Sakshi",
         "username": "farhanq",
         "bio": "DevOps. Rollback nahi karna pada, sab thik.",
         "photo": "a14.jpg",
@@ -145,7 +145,7 @@ const Store = (function () {
       },
       {
         "id": "ritikas",
-        "name": "Ritika Shah",
+        "name": "Aarti",
         "username": "ritikas",
         "bio": "Product. Scope tight rakha hai, good.",
         "photo": "a15.jpg",
@@ -154,7 +154,7 @@ const Store = (function () {
       },
       {
         "id": "manavg",
-        "name": "Manvi Grover",
+        "name": "Kajal",
         "username": "manavg",
         "bio": "Security. Dependabot alerts 4 -> 0.",
         "photo": "a16.jpg",
@@ -163,7 +163,7 @@ const Store = (function () {
       },
       {
         "id": "poojah",
-        "name": "Pooja Hegde",
+        "name": "Swati",
         "username": "poojah",
         "bio": "Support. Escalation 2, dono resolved.",
         "photo": "a17.jpg",
@@ -172,7 +172,7 @@ const Store = (function () {
       },
       {
         "id": "kunalm",
-        "name": "Komal Verma",
+        "name": "Monika",
         "username": "kunalm",
         "bio": "Frontend. Shadow bhi same: 0 8px 30px.",
         "photo": "a18.jpg",
@@ -181,7 +181,7 @@ const Store = (function () {
       },
       {
         "id": "ayeshas",
-        "name": "Ayesha Siddiqui",
+        "name": "Sonali",
         "username": "ayeshas",
         "bio": "Localization. Hindi strings pass ho gayi.",
         "photo": "a19.jpg",
@@ -190,7 +190,7 @@ const Store = (function () {
       },
       {
         "id": "vikrams",
-        "name": "Vibha Sethi",
+        "name": "Priti",
         "username": "vikrams",
         "bio": "Payments. Gateway timeout replay nahi hoga.",
         "photo": "a20.jpg",
@@ -199,7 +199,7 @@ const Store = (function () {
       },
       {
         "id": "nehac",
-        "name": "Neha Choudhary",
+        "name": "Shreya",
         "username": "nehac",
         "bio": "Research. Notes doc me daal diye.",
         "photo": "a21.jpg",
@@ -208,7 +208,7 @@ const Store = (function () {
       },
       {
         "id": "sidj",
-        "name": "Siddhi Joshi",
+        "name": "Tanvi",
         "username": "sidj",
         "bio": "Platform. Rate limit 200/min pe set.",
         "photo": "a22.jpg",
@@ -217,7 +217,7 @@ const Store = (function () {
       },
       {
         "id": "tarab",
-        "name": "Tara Bhat",
+        "name": "Kriti",
         "username": "tarab",
         "bio": "Brand. Logo padding 2px zyada theek lag rahi.",
         "photo": "a23.jpg",
@@ -226,7 +226,7 @@ const Store = (function () {
       },
       {
         "id": "harshitaj",
-        "name": "Harshita Jain",
+        "name": "Muskan",
         "username": "harshitaj",
         "bio": "Marketing. Launch copy bhej diya hai.",
         "photo": "a24.jpg",
@@ -235,7 +235,7 @@ const Store = (function () {
       },
       {
         "id": "arjunr",
-        "name": "Arya Reddy",
+        "name": "Jyoti",
         "username": "arjunr",
         "bio": "iOS. TestFlight build 214 live.",
         "photo": "a25.jpg",
@@ -244,7 +244,7 @@ const Store = (function () {
       },
       {
         "id": "meherk",
-        "name": "Meher Kapadia",
+        "name": "Deepika",
         "username": "meherk",
         "bio": "Ops. Roster audit done, 2 duplicates removed.",
         "photo": "a26.jpg",
@@ -253,7 +253,7 @@ const Store = (function () {
       },
       {
         "id": "yashp",
-        "name": "Yasmin Patwardhan",
+        "name": "Radhika",
         "username": "yashp",
         "bio": "Growth. Retention 1.8pt up this week.",
         "photo": "a27.jpg",
@@ -262,7 +262,7 @@ const Store = (function () {
       },
       {
         "id": "diyam",
-        "name": "Diya Malhotra",
+        "name": "Megha",
         "username": "diyam",
         "bio": "Design. Empty states ban gaye.",
         "photo": "a28.jpg",
@@ -271,7 +271,7 @@ const Store = (function () {
       },
       {
         "id": "kabirs",
-        "name": "Karishma Saxena",
+        "name": "Pallavi",
         "username": "kabirs",
         "bio": "Backend. Patch bhej raha hoon, ek din me.",
         "photo": "a29.jpg",
@@ -280,7 +280,7 @@ const Store = (function () {
       },
       {
         "id": "ananyab",
-        "name": "Ananya Bose",
+        "name": "Ananya",
         "username": "ananyab",
         "bio": "Accessibility. Contrast AA pass, ab focus bhi.",
         "photo": "a30.jpg",
@@ -289,7 +289,7 @@ const Store = (function () {
       },
       {
         "id": "rehanm",
-        "name": "Reema Mirza",
+        "name": "Isha",
         "username": "rehanm",
         "bio": "Infra. Node 20 upgrade smooth tha.",
         "photo": "a31.jpg",
@@ -298,7 +298,7 @@ const Store = (function () {
       },
       {
         "id": "sanyak",
-        "name": "Sanya Kulkarni",
+        "name": "Snehal",
         "username": "sanyak",
         "bio": "Product. Roadmap Q1 me shift kiya.",
         "photo": "a32.jpg",
@@ -307,7 +307,7 @@ const Store = (function () {
       },
       {
         "id": "devansh",
-        "name": "Devanshi Gupta",
+        "name": "Garima",
         "username": "devansh",
         "bio": "Frontend. Zoom lock test ho gaya.",
         "photo": "a33.jpg",
@@ -316,7 +316,7 @@ const Store = (function () {
       },
       {
         "id": "prishan",
-        "name": "Prisha Nathan",
+        "name": "Bhavna",
         "username": "prishan",
         "bio": "Content. Glossary update kar diya.",
         "photo": "a34.jpg",
@@ -325,7 +325,7 @@ const Store = (function () {
       },
       {
         "id": "omprakash",
-        "name": "Oindrilla Rao",
+        "name": "Nikita",
         "username": "omprakash",
         "bio": "QA. Regression suite 46 min me pass.",
         "photo": "a35.jpg",
@@ -334,6 +334,19 @@ const Store = (function () {
       }
     ];
 
+  // One-time migration renames the original roster while preserving IDs and other fields.
+  var NAME_MIGRATION = {
+    "meera": "Priya", "aarav": "Anjali", "kabir": "Pooja", "zoya": "Neha",
+    "nafisa": "Sneha", "dev": "Simran", "priya": "Riya", "harsh": "Shivani",
+    "tanvid": "Divya", "rohitn": "Khushi", "snehap": "Nisha", "adityar": "Komal",
+    "ishitab": "Payal", "farhanq": "Sakshi", "ritikas": "Aarti", "manavg": "Kajal",
+    "poojah": "Swati", "kunalm": "Monika", "ayeshas": "Sonali", "vikrams": "Priti",
+    "nehac": "Shreya", "sidj": "Tanvi", "tarab": "Kriti", "harshitaj": "Muskan",
+    "arjunr": "Jyoti", "meherk": "Deepika", "yashp": "Radhika", "diyam": "Megha",
+    "kabirs": "Pallavi", "ananyab": "Ananya", "rehanm": "Isha", "sanyak": "Snehal",
+    "devansh": "Garima", "prishan": "Bhavna", "omprakash": "Nikita"
+  };
+  var USERS_RAW = null;
   var USERS = null;
 
   var PROFILE = {
@@ -378,9 +391,26 @@ const Store = (function () {
 
   /* ---------------- the roster (admin panel owns this) ---------------- */
   function users() {
-    if (!USERS) {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY.users); } catch (e) {}
+    // Firestore can update localStorage from another panel; don't keep a stale roster.
+    if (!USERS || raw !== USERS_RAW) {
       var stored = read(KEY.users, null);
+      if (Array.isArray(stored)) {
+        try {
+          if (!localStorage.getItem("terox.names.202611.v1")) {
+            stored = stored.map(function (u) {
+              var change = NAME_MIGRATION[u.id];
+              return change ? Object.assign({}, u, { name: change }) : u;
+            });
+            write(KEY.users, stored);
+            localStorage.setItem("terox.names.202611.v1", "1");
+            raw = localStorage.getItem(KEY.users);
+          }
+        } catch (e) {}
+      }
       USERS = Array.isArray(stored) ? stored : SEED_USERS.map(function (u) { return u; });
+      USERS_RAW = raw;
     }
     return USERS;
   }
