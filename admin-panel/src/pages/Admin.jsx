@@ -15,9 +15,21 @@ function AdminChrome({ tab, setTab, children }) {
   const [open, setOpen] = useState(false);
   const [show, setShow] = useState(false);
   const [scrim, setScrrim] = useState(false);
+  const [desktop, setDesktop] = useState(false);
   const drawer = useRef(null);
   const last = useRef(null);
   const p = Store.profile();
+
+  // Detect desktop — show sidebar instead of slide-in drawer
+  useEffect(function () {
+    function check() { setDesktop(window.innerWidth >= 1024); }
+    check();
+    window.addEventListener("resize", check);
+    return function () { window.removeEventListener("resize", check); };
+  }, []);
+
+  // On desktop, sidebar is always open
+  const sidebarOpen = desktop ? true : open;
 
   function on() {
     last.current = document.activeElement;
@@ -55,9 +67,9 @@ function AdminChrome({ tab, setTab, children }) {
           <Link className="icon-btn" to="/" aria-label="Back to user panel"><IcoBack /></Link>
           <b className="admin-title">Terox Admin</b>
           <div className="appbar-actions">
-            <button className="icon-btn solid" id="adminMenuBtn" aria-label="Open menu" onClick={open ? off : on}>
+            {!desktop && <button className="icon-btn solid" id="adminMenuBtn" aria-label="Open menu" onClick={open ? off : on}>
               <IcoMenu />
-            </button>
+            </button>}
           </div>
         </header>
         <div className="body admin-body">
@@ -74,7 +86,7 @@ function AdminChrome({ tab, setTab, children }) {
       </div>
 
       <button className={"scrim" + (show ? " show" : "")} id="adminScrim" hidden={!scrim} aria-hidden="true" tabIndex={-1} onClick={off} />
-      <aside className={"drawer" + (open ? " open" : "")} id="adminDrawer" ref={drawer} aria-label="Menu" aria-hidden={open ? "false" : "true"}>
+      <aside className={"drawer" + (sidebarOpen ? " open" : "")} id="adminDrawer" ref={drawer} aria-label="Menu" aria-hidden={sidebarOpen ? "false" : "true"}>
         <div className="drawer-head">
           <Link className={"avatar s48 t-" + (p.tint || "accent")} to="/profile" data-davatar="">{Store.initials(p.name)}<span className="live"></span></Link>
           <div className="who">

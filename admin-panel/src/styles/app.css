@@ -563,3 +563,195 @@
 .verify-icon { font-size: 2.5rem; text-align: center; margin: 8px 0; }
 .verify-ok { color: var(--yes); }
 .verify-bad { color: var(--no); }
+
+/* ==========================================================================
+   Desktop responsive styles for admin panel
+   Overrides mobile constraints on wider screens
+   ========================================================================== */
+
+/* Break out of mobile width constraint on desktop */
+@media (min-width: 768px) {
+  .admin-app {
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+  }
+  .admin-app .appbar.admin-bar {
+    max-width: 1200px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-body {
+    padding: 24px 32px;
+  }
+
+  /* tabs — wider, more breathing room */
+  .admin-tabs {
+    margin-bottom: 24px;
+    padding: 6px;
+  }
+  .admin-tab {
+    padding: 12px 24px;
+    font-size: .9rem;
+    gap: 8px;
+  }
+
+  /* dashboard — 4 columns on desktop */
+  .dash-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .dash-card {
+    padding: 20px;
+  }
+  .dash-card .dash-ic {
+    font-size: 2rem;
+  }
+  .dash-card .dash-val {
+    font-size: 2.2rem;
+  }
+  .dash-card .dash-lbl {
+    font-size: .82rem;
+  }
+
+  /* users — wider search, bigger table */
+  .admin-search-wrap {
+    margin-bottom: 16px;
+  }
+  .admin-search {
+    padding: 12px 16px;
+    font-size: .95rem;
+  }
+  .admin-table-wrap {
+    border-radius: 14px;
+  }
+  .admin-table {
+    font-size: .88rem;
+  }
+  .admin-table th {
+    padding: 12px 16px;
+    font-size: .78rem;
+  }
+  .admin-table td {
+    padding: 12px 16px;
+  }
+  .admin-u-name b {
+    font-size: .9rem;
+  }
+  .admin-u-name .muted {
+    font-size: .8rem;
+  }
+
+  /* payment requests — wider cards, better layout */
+  .pay-req-list {
+    gap: 16px;
+  }
+  .pay-req {
+    padding: 20px;
+  }
+  .pay-req-head {
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .pay-req-info b {
+    font-size: 1rem;
+  }
+  .pay-req-info .muted {
+    font-size: .82rem;
+  }
+  .pay-req-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .pay-req-grid .muted {
+    font-size: .72rem;
+  }
+  .pay-req-grid b {
+    font-size: .92rem;
+  }
+  .pay-req-actions {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  /* proof dialog — wider */
+  .proof-dlg .dlg-box {
+    max-width: 600px;
+  }
+  .proof-box .proof-img-wrap img {
+    max-height: 400px;
+  }
+}
+
+/* Large desktop — even more room */
+@media (min-width: 1200px) {
+  .admin-app {
+    max-width: 1400px;
+  }
+  .admin-app .appbar.admin-bar {
+    max-width: 1400px;
+  }
+  .dash-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+}
+
+/* ==========================================================================
+   Admin panel desktop sidebar layout
+   On desktop (>= 1024px), the drawer becomes a persistent sidebar
+   ========================================================================== */
+@media (min-width: 1024px) {
+  .admin-app .body.admin-body {
+    padding-left: 280px;
+  }
+  .admin-app .appbar.admin-bar {
+    padding-left: 280px;
+  }
+
+  /* Drawer → persistent sidebar */
+  #adminDrawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    max-width: 280px;
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-right: 1px solid var(--border);
+    background: var(--bg-elev);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Hide scrim on desktop (sidebar is always visible) */
+  #adminScrim {
+    display: none !important;
+  }
+
+  /* Sidebar nav links — wider, better spacing */
+  #adminDrawer nav {
+    padding: 12px;
+    gap: 4px;
+  }
+  #adminDrawer nav a {
+    padding: 12px 16px;
+    font-size: .9rem;
+    border-radius: 10px;
+  }
+
+  /* Sidebar profile section */
+  #adminDrawer .drawer-head {
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  #adminDrawer .drawer-foot {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+}
