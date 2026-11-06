@@ -2,21 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f5f7" id="themeColor" />
-  <meta name="description" content="Terox Chat admin — create and manage the users that show up on the chat home page." />
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo-32.png" />
-  <link rel="apple-touch-icon" href="assets/logo.png" />
-  <title>Admin · Terox Chat</title>
-  <style>
-    /* a few lines inline so the page is never naked if assets/ is unreachable */
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; color: #1f2430; }
-    .adm-guard { display: none; margin: 12px 16px; padding: 14px 16px; border: 1px solid #d6dbe4; border-left: 4px solid #0b64c4; border-radius: 6px; background: #fff; font-size: 14px; line-height: 1.55; }
-    .adm-guard.show { display: block; }
-    .adm-guard b { display: block; margin-bottom: 6px; font-size: 15px; }
-    .adm-guard code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
-    .adm-guard ul { margin: 8px 0 0; padding-left: 20px; }
-  </style>
+  <meta name="description" content="Terox Admin Panel — dashboard, users, payment verification" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/logo-32.png" />
+  <link rel="apple-touch-icon" href="./assets/logo.png" />
+  <title>Terox Admin</title>
   <script>
     (function () {
       try {
@@ -26,164 +17,9 @@
       } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
     })();
   </script>
-  <link rel="stylesheet" href="assets/ui.css" />
-  <link rel="stylesheet" href="assets/admin.css" />
 </head>
 <body>
-  <div class="adm-guard" id="cssGuard" role="alert">
-    <b>The panel's stylesheet and scripts did not load.</b>
-    <span id="guardWhy"></span>
-    <ul>
-      <li>Run a server inside this folder (the one that holds <code>index.html</code> and <code>assets/</code>): <code>python3 -m http.server 5173</code></li>
-      <li>then open <code>http://localhost:5173/</code> — or <code>/admin-panel/</code> if you served the repository root</li>
-      <li>GitHub <code>raw.</code> links and in-app file previews refuse linked CSS/JS. This folder is self-contained: it can be served or deployed on its own, as long as <code>assets/</code> stays next to <code>index.html</code>.</li>
-    </ul>
-  </div>
-  <div class="adm">
-
-    <header class="adm-top">
-      <a class="adm-brand" href="../user-panel/index.html">
-        <img class="logo-img" src="assets/logo.png" alt="Terox Chat admin" width="32" height="32" />
-        <span><b>Terox Chat</b><em>Admin panel</em></span>
-      </a>
-
-      <div class="adm-strip">
-        <div class="adm-meters">
-          <span class="meter"><i id="mUsers">0</i> users</span>
-          <span class="meter"><i id="mUsed">0</i> / <i id="mPool">0</i> images used</span>
-        </div>
-        </div>
-
-      <div class="appbar-actions">
-        <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark theme">
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        </button>
-        <button class="btn yes" id="newBtn" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          New user
-        </button>
-      </div>
-    </header>
-
-    <p class="adm-note">
-      Users created here are the users on the chat home page. The profile image is a <b>file you
-      upload</b> — never a pasted link — and if you skip it the user takes a still-unused image from
-      <code>assets/avatars/</code>, so no two users ever share one.
-    </p>
-
-    <main class="adm-grid">
-
-      <!-- ---------- the roster ---------- -->
-      <section class="adm-list-col">
-        <div class="adm-tools card">
-          <div class="search">
-            <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input id="q" type="search" placeholder="Search name, @username or bio" aria-label="Search the roster" autocomplete="off" enterkeyhint="search" />
-          </div>
-          <div class="adm-tools-end">
-            <span class="hint" id="listCount">—</span>
-          </div>
-        </div>
-
-        <ul class="adm-list card" id="list" aria-label="Users created from the admin panel"></ul>
-
-        <div class="adm-data card">
-          <div>
-            <h2>Roster file</h2>
-            <p>Export writes <code>data/users.json</code>; import reads it back. The chat app and this panel share the same store, so changes show up on the home list immediately.</p>
-          </div>
-          <div class="adm-data-btns">
-            <button class="btn ghost sm" id="exportBtn" type="button">Export users.json</button>
-            <button class="btn ghost sm" id="importBtn" type="button">Import</button>
-            <input type="file" id="importFile" accept="application/json,.json" hidden />
-            <button class="btn ghost sm" id="resetBtn" type="button">Reset to shipped list</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ---------- create / edit ---------- -->
-      <section class="adm-form-col">
-        <form class="card adm-form" id="uForm" autocomplete="off" novalidate>
-          <div class="adm-form-head">
-            <h2 id="formTitle">Create user</h2>
-            <button class="icon-btn" id="formClose" type="button" aria-label="Close form" hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-            </button>
-          </div>
-
-          <div class="stack" style="--gap:12px">
-            <div class="field">
-              <label for="fName">Name <span class="req">required</span></label>
-              <input class="input" id="fName" maxlength="40" placeholder="Meera Iyer" />
-              <p class="err" id="eName" hidden></p>
-            </div>
-            <div class="field">
-              <label for="fUser">Username <span class="req">required</span></label>
-              <div class="adm-handle"><span>@</span><input class="input" id="fUser" maxlength="20" autocapitalize="none" spellcheck="false" placeholder="meeraiyer" /></div>
-              <p class="hint" id="hUser">letters, numbers and _ only — must be unique</p>
-              <p class="err" id="eUser" hidden></p>
-            </div>
-            <div class="field">
-              <label for="fBio">Bio <span class="opt">optional</span></label>
-              <textarea class="textarea" id="fBio" rows="3" maxlength="160" placeholder="Frontend Lead. Ships the CSS."></textarea>
-              <p class="hint" id="hBio">0 / 160</p>
-            </div>
-
-            <div class="field">
-              <span class="lbl">Profile photo <span class="opt">you upload the file</span></span>
-              <label class="drop" id="pDrop">
-                <input type="file" id="pFile" accept="image/jpeg,image/png,image/webp" hidden />
-                <span class="drop-inner">
-                  <span id="pPreview" class="drop-av"></span>
-                  <span class="drop-text">
-                    <b id="pName">no image yet</b>
-                    <p id="pNote">click to choose a JPG, PNG or WebP — it is cropped to a 360px square and stored as this user's own file</p>
-                  </span>
-                </span>
-              </label>
-              <p class="err" id="pErr" hidden></p>
-              <div class="adm-photo-btns">
-                <button class="btn ghost sm" type="button" id="pPool">Take the next free pool image</button>
-                <button class="btn ghost sm" type="button" id="pClear">Remove photo</button>
-                <span class="hint" id="pPoolNote"></span>
-              </div>
-            </div>
-          </div>
-
-          <p class="hint adm-lock" id="fbLock" hidden>Connected to Firebase — sign in as the admin account before saving, or the write will be refused by the security rules.</p>
-          <div class="adm-form-foot">
-            <button class="btn ghost" type="button" id="cancelBtn">Cancel</button>
-            <button class="btn yes" type="submit" id="saveBtn">Create user</button>
-          </div>
-        </form>
-      </section>
-    </main>
-
-    <button class="adm-scrim" id="formScrim" hidden aria-hidden="true" tabindex="-1"></button>
-  </div>
-
-  <script>
-    /* three sentinel checks — the token file (assets/ui.css), this folder's
-       admin.css, and the roster script. If any of them cannot load (raw.github links,
-       a copied admin/ folder, a sandboxed preview pane) say so instead of going naked. */
-    setTimeout(function () {
-      var bar = document.querySelector(".adm-top");
-      var tokens = !!getComputedStyle(document.documentElement).getPropertyValue("--brand").trim();
-      var styled = bar && getComputedStyle(bar).position === "sticky";
-      var rows = document.querySelectorAll(".u-line").length;
-      if (tokens && styled && rows) return;
-      var why = [];
-      if (!tokens) why.push("the shared stylesheet assets/ui.css did not load, so there are no design tokens");
-      else if (!styled) why.push("admin.css was not applied");
-      if (!rows && !document.querySelector("script[src*='admin.js']")) why.push("admin.js is missing");
-      else if (!rows) why.push("admin.js did not run, so the roster is empty");
-      document.getElementById("guardWhy").textContent = why.join(", and ") + ".";
-      document.getElementById("cssGuard").className = "adm-guard show";
-    }, 900);
-  </script>
-  <script src="assets/store.js"></script>
-  <script src="assets/ui.js"></script>
-  <script src="assets/admin.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

@@ -10,7 +10,13 @@ import "./styles/app.css";
 import "./styles/mount.css";
 import UI from "./lib/ui.js";
 import Store from "./lib/store.js";
+import { initSync } from "./lib/firestore-sync.js";
 import App from "./App.jsx";
+
+/* Initialize Firestore sync — loads data from Firestore into localStorage
+   and keeps them in sync. Safe to call even if Firebase config is missing
+   (will log a warning and skip sync). */
+initSync();
 
 const pool = import.meta.glob("./assets/avatars/*.jpg", { eager: true, query: "?url", import: "default" });
 const map = {};

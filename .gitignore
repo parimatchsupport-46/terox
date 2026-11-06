@@ -1,11 +1,5 @@
 node_modules/
-.DS_Store
-Thumbs.db
-*.log
-.idea/
-.vscode/
-
-# the pool of placeholder faces IS committed (35 small squares per panel) so a fresh
-# clone and the Pages site show the same roster as this machine - no 404 initials.
-# Nothing an admin *uploads* ever becomes a file in here: it is kept on the user's own
-# record inside data/users.json, and it is the exported JSON that moves between devices.
+dist/
+.env.local
+.env
+*.local

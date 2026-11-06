@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm install --prefix user-panel && npm install --prefix admin-panel",
+  "buildCommand": "npm run build --prefix user-panel && npm run build --prefix admin-panel"
+}
