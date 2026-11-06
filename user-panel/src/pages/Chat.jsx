@@ -51,6 +51,7 @@ export default function Chat() {
   const seen = useRef(0);
 
   const sheetMsg = sheetId ? Store.find(uid, sheetId) : null;
+  const latestRequest = Store.payReqForUser(uid);
 
   document.title = user.name + " · Terox Chat";
 
@@ -61,26 +62,12 @@ export default function Chat() {
     if (last && last.from === "me" && Store.NEXT[last.kind]) Store.queueReply(uid, Store.NEXT[last.kind]);
     setSheetId(null); setSheetOn(false); setSheetScrim(false);
     seen.current = 0;
-    /* restore a pending payment verification if the user navigates back */
+    /* Restore pending or rejected verification when returning to the chat. */
     var pendingReq = Store.payReqForUser(uid);
-    if (pendingReq) {
+    if (pendingReq && pendingReq.status !== "accepted") {
       setVerifyReqId(pendingReq.id);
-      if (pendingReq.status === "accepted") {
-        setVerifyStatus("accepted");
-        setVerifyOpen(true);
-        var threadMsgs = Store.thread(uid).messages;
-        var hasAck = threadMsgs.some(function (m) { return m.kind === "ack"; });
-        if (!hasAck) {
-          var p2 = Store.picksOf(threadMsgs);
-          Store.receive(uid, "Payment mil gaya ✅ " + (p2.mode || "Call") + " · " + (p2.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
-        }
-      } else if (pendingReq.status === "rejected") {
-        setVerifyStatus("rejected");
-        setVerifyOpen(true);
-      } else {
-        setVerifyStatus("verifying");
-        setVerifyOpen(true);
-      }
+      setVerifyStatus(pendingReq.status === "rejected" ? "rejected" : "verifying");
+      setVerifyOpen(true);
     } else {
       setVerifyReqId(null);
       setVerifyStatus("verifying");
@@ -158,38 +145,18 @@ export default function Chat() {
   function openPay() { navigate("/pay?uid=" + encodeURIComponent(uid)); }
   function closeVerify() { setVerifyOpen(false); setVerifyStatus("verifying"); setVerifyReqId(null); }
 
-  /* poll the store for the payment request status while the verify popup is
-     open. When the admin accepts or rejects, update the popup and send the
-     confirm-ack message. */
+  /* Apply each accepted payment once, including when the chat is reopened. */
   useEffect(function () {
-    if (!verifyOpen || !verifyReqId) return undefined;
-    var req = Store.payReqs().filter(function (r) { return r.id === verifyReqId; })[0];
-    if (!req) return undefined;
-    if (req.status !== "pending" && req.status !== verifyStatus) {
-      setVerifyStatus(req.status);
-      if (req.status === "accepted") {
-        UI.toast("Payment verified ✅", "good");
-        var picks2 = Store.picksOf(Store.thread(uid).messages);
-        Store.receive(uid, "Payment mil gaya ✅ " + (picks2.mode || "Call") + " · " + (picks2.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
-      } else if (req.status === "rejected") {
-        UI.toast("Payment rejected — fir se try karo", "bad");
-      }
+    if (!latestRequest) return;
+    if (latestRequest.status === "accepted") {
+      if (Store.acknowledgePayment(uid, latestRequest.id)) UI.toast("Payment verified", "ok");
+      setVerifyOpen(false);
+      setVerifyReqId(null);
+    } else if (verifyOpen && latestRequest.id === verifyReqId && latestRequest.status === "rejected" && verifyStatus !== "rejected") {
+      setVerifyStatus("rejected");
+      UI.toast("Payment rejected — fir se try karo", "bad");
     }
-    var t = setInterval(function () {
-      var r = Store.payReqs().filter(function (x) { return x.id === verifyReqId; })[0];
-      if (r && r.status !== "pending" && r.status !== verifyStatus) {
-        setVerifyStatus(r.status);
-        if (r.status === "accepted") {
-          UI.toast("Payment verified ✅", "good");
-          var p2 = Store.picksOf(Store.thread(uid).messages);
-          Store.receive(uid, "Payment mil gaya ✅ " + (p2.mode || "Call") + " · " + (p2.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
-        } else if (r.status === "rejected") {
-          UI.toast("Payment rejected — fir se try karo", "bad");
-        }
-      }
-    }, 1500);
-    return function () { clearInterval(t); };
-  }, [verifyOpen, verifyReqId, verifyStatus]);
+  }, [uid, latestRequest && latestRequest.id, latestRequest && latestRequest.status, verifyOpen, verifyReqId, verifyStatus]);
 
   useEffect(function () {
     function key(e) { if (e.key === "Escape" && sheetOn) closeSheet(); }
@@ -338,12 +305,12 @@ export default function Chat() {
         </div>
       </div>
 
-      <button className="scrim" id="verifyScrim" hidden aria-hidden="true" tabIndex={-1} onClick={closeVerify} />
+      <div className="verify-backdrop" id="verifyScrim" hidden={!verifyOpen} aria-hidden="true" />
       <div className="dlg center" id="verifyDlg" role="dialog" aria-modal="true" aria-labelledby="verifySub" hidden={!verifyOpen}>
         <div className="dlg-box verify-box">
           {verifyStatus === "verifying" && (
             <>
-              <div className="verify-spinner"><span className="spinner-dots"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span></div>
+              <div className="verify-loader" aria-hidden="true"><span></span><i>₹</i></div>
               <b id="verifySub">Payment Verification in Progress...</b>
               <p className="verify-sub">Your payment is being verified. Please wait, this may take a moment.</p>
             </>

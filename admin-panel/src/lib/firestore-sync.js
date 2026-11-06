@@ -53,7 +53,8 @@ function syncToFirestore(event) {
     var promises = [];
     KEYS.forEach(function (key) {
       var val = localStorage.getItem(key);
-      if (val === null) return;
+      // Chats are managed by the user panel; the admin must not overwrite them.
+      if (val === null || key === "terox.chats.v1") return;
       promises.push(
         setDoc(doc(db, "data", key), { value: JSON.parse(val) })
           .catch(function (e) { console.warn("[Terox] Firestore sync failed for", key, ":", e.message || e); })

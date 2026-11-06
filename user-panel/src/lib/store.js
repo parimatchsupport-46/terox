@@ -592,15 +592,27 @@ const Store = (function () {
     all[id].unread = 0;
     saveChats(all);
   }
+  /* Replace this conversation exactly once per accepted payment. */
+  function acknowledgePayment(id, requestId) {
+    if (!id || !requestId) return false;
+    var all = chats();
+    var existing = all[id] || { messages: [], unread: 0 };
+    if (existing.acceptedPaymentId === requestId) return false;
+    cancelReply(id);
+    var notice = msg("them", "Your payment has been verified. You should receive a call request within 1–2 minutes. Please wait here.", Date.now(), { kind: "payment-accepted", paymentRequestId: requestId });
+    all[id] = { messages: [notice], unread: 0, acceptedPaymentId: requestId };
+    saveChats(all);
+    return true;
+  }
   function clearChat(id) {
     var all = chats();
     if (!all[id]) return;
-    all[id] = { messages: [], unread: 0 };
+    all[id] = { messages: [], unread: 0, acceptedPaymentId: all[id].acceptedPaymentId || null };
     saveChats(all);
   }
   function clearAll() {
     var all = chats();
-    Object.keys(all).forEach(function (id) { all[id] = { messages: [], unread: 0 }; });
+    Object.keys(all).forEach(function (id) { all[id] = { messages: [], unread: 0, acceptedPaymentId: all[id].acceptedPaymentId || null }; });
     saveChats(all);
   }
 
@@ -661,8 +673,8 @@ const Store = (function () {
   }
   function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
 
-  function emit() {
-    window.dispatchEvent(new Event("terox:change"));
+  function emit(key) {
+    window.dispatchEvent(new CustomEvent("terox:change", { detail: key ? { key: key } : undefined }));
   }
 
   /* ---------------- payment requests (admin panel verifies) ----------------
@@ -677,7 +689,7 @@ const Store = (function () {
   }
   function savePayReqs(next) {
     write(PAY_KEY, next);
-    emit();
+    emit(PAY_KEY);
     return next;
   }
   function addPayReq(req) {
@@ -810,7 +822,7 @@ const Store = (function () {
     unreadTotal: unreadTotal, markRead: markRead,
     append: append, receive: receive, edit: edit, remove: remove, restore: restore,
     find: function (id, msgId) { return find(chats(), id, msgId); },
-    clearChat: clearChat, clearAll: clearAll,
+    clearChat: clearChat, clearAll: clearAll, acknowledgePayment: acknowledgePayment,
     profile: profile, saveProfile: saveProfile,
     prefs: prefs, savePref: savePref,
     initials: initials, time: time, dateLong: dateLong, dayStamp: dayStamp, rowStamp: rowStamp,

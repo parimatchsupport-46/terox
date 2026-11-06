@@ -93,6 +93,28 @@ export default function Payment() {
     }, 800);
   }
 
+  async function copyUpi() {
+    let copied = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(upi);
+        copied = true;
+      }
+    } catch (e) { /* Try the fallback below. */ }
+    if (!copied) {
+      const field = document.createElement("textarea");
+      field.value = upi;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      try { copied = document.execCommand("copy"); } catch (e) { copied = false; }
+      field.remove();
+    }
+    UI.toast(copied ? "UPI ID copied" : "Could not copy UPI ID. Please copy it manually.", copied ? "ok" : "bad");
+  }
+
   function payLater() {
     UI.toast("Payment ke bina service provide nahi ki jayegi", "bad");
     navigate("/chat?u=" + encodeURIComponent(uid));
@@ -108,66 +130,30 @@ export default function Payment() {
         <div style={{ flex: 1 }}></div>
       </>}
     >
-      <div className="pay-page">
-        {/* payment summary */}
-        <div className="pay-summary card">
-          <div className="pay-summary-head">
-            <span className="avatar s48 t-accent" dangerouslySetInnerHTML={{ __html: UI.avatarHTML(user, 48, true) }} />
-            <div>
-              <b>{user.name}</b>
-              <p className="muted">{service || "Service"} · {plan || "—"}</p>
-            </div>
-          </div>
-          <div className="pay-summary-amount">
-            <span className="pay-to">Amount to pay</span>
-            <span className="pay-amt">{amount || "—"}</span>
-          </div>
+      <div className="pay-page compact-pay">
+        <div className="compact-pay-summary">
+          <div><span className="compact-pay-label">Amount to pay</span><strong className="pay-amt">{amount || "—"}</strong></div>
+          <span className="compact-pay-service">{service || "Service"} · {plan || "—"}</span>
         </div>
-
-        {/* QR + timer */}
-        <div className="pay-qr-section card">
-          <h2 className="pay-section-title">Scan to pay</h2>
-          <p className="pay-section-subtitle">Open any UPI app and scan the QR code</p>
+        <div className="compact-pay-panel">
+          <h2 className="pay-section-title">Scan & pay</h2>
           <div className="pay-qr-large" id="payQrLarge">
-            {paymentUri ? (
-              <QRCodeSVG value={paymentUri} size={200} level="M" marginSize={4} title="UPI payment QR code" />
-            ) : (
+            {paymentUri ? <QRCodeSVG value={paymentUri} size={200} level="M" marginSize={4} title="UPI payment QR code" /> : (
               <span className="pay-qr-unavailable" role="status">
                 {upiStatus === "loading" ? "Loading payment details…" : upiStatus === "offline" ? "Connect to the internet to load payment details." : upiStatus === "error" ? "Could not load payment details. Please try again." : !upi ? "UPI ID not set. Please contact support." : "Payment details unavailable. Please return to chat and select a plan."}
               </span>
             )}
           </div>
-          {paymentUri && <p className="pay-upi-id">UPI ID: <b>{upi}</b></p>}
-          <div className="pay-timer-bar">
-            <span className="pay-timer-ic">⏰</span>
-            <span className="pay-timer-txt">Payment valid for</span>
-            <span className="pay-timer" id="payTimer">{mmss(paySecs)}</span>
-          </div>
-          <p className="pay-scan-hint">QR scan karke payment karo, UTR number niche daalo</p>
+          {paymentUri && <div className="compact-upi"><span>UPI ID <b>{upi}</b></span><button type="button" onClick={copyUpi} aria-label="Copy UPI ID">Copy</button></div>}
+          <div className="compact-timer"><span>Payment valid for</span><strong id="payTimer">{mmss(paySecs)}</strong></div>
         </div>
-
-        {/* UTR */}
-        <div className="pay-form card">
-          <div className="pay-utr">
-            <label htmlFor="payUtrInput">UTR Number</label>
-            <input
-              id="payUtrInput"
-              type="text"
-              value={payUtr}
-              onChange={function (e) { setPayUtr(e.target.value); }}
-              placeholder="Enter UTR Number"
-              autoComplete="off"
-              disabled={done}
-            />
-          </div>
+        <div className="compact-pay-input">
+          <label htmlFor="payUtrInput">UTR number</label>
+          <input id="payUtrInput" type="text" value={payUtr} onChange={function (e) { setPayUtr(e.target.value); }} placeholder="Enter UTR number" autoComplete="off" disabled={done} />
         </div>
-
-        {/* actions */}
         <div className="pay-actions">
           <button className="btn ghost sm" type="button" id="payLater" onClick={payLater} disabled={done}>Pay later</button>
-          <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim() || done || !paymentUri}>
-            {done ? "Submitted ✓" : "Payment Complete"}
-          </button>
+          <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim() || done || !paymentUri}>{done ? "Submitted ✓" : "Payment Complete"}</button>
         </div>
       </div>
     </Chrome>

@@ -26,13 +26,15 @@ const KEYS = [
 let _initialized = false;
 let _syncing = false;       // prevents loops: Firestore → localStorage → Firestore
 let _debounceTimer = null;  // debounce localStorage → Firestore sync
+let _payReqDirty = false;
+let _syncQueued = false;
 
 /* Load all data from Firestore into localStorage */
 async function loadFromFirestore() {
   try {
     const snap = await getDocs(collection(db, "data"));
     snap.forEach(function (d) {
-      if (!KEYS.includes(d.id)) return;
+      if (!KEYS.includes(d.id) || d.id === "terox.payreq.v1") return;
       const val = d.data().value;
       localStorage.setItem(d.id, JSON.stringify(val));
     });
@@ -45,24 +47,27 @@ async function loadFromFirestore() {
 
 /* Debounced sync: push localStorage → Firestore */
 function syncToFirestore(event) {
-  if (_syncing || event?.detail?.remote) return;
+  if (event?.detail?.remote) return;
+  if (event?.detail?.key === "terox.payreq.v1") _payReqDirty = true;
   if (_debounceTimer) clearTimeout(_debounceTimer);
   _debounceTimer = setTimeout(function () {
     _debounceTimer = null;
+    if (_syncing) { _syncQueued = true; return; }
     _syncing = true;
+    const syncPayReq = _payReqDirty;
+    _payReqDirty = false;
     var promises = [];
     KEYS.forEach(function (key) {
       var val = localStorage.getItem(key);
-      if (val === null || key === "terox.users.v1") return;
+      if (val === null || key === "terox.users.v1" || (key === "terox.payreq.v1" && !syncPayReq)) return;
       promises.push(
         setDoc(doc(db, "data", key), { value: JSON.parse(val) })
           .catch(function (e) { console.warn("[Terox] Firestore sync failed for", key, ":", e.message || e); })
       );
     });
-    Promise.all(promises).then(function () {
+    Promise.all(promises).finally(function () {
       _syncing = false;
-    }).catch(function () {
-      _syncing = false;
+      if (_syncQueued) { _syncQueued = false; syncToFirestore(); }
     });
   }, 500);
 }
@@ -73,7 +78,7 @@ function listenToFirestore() {
     if (_syncing) return;
     _syncing = true;
     snap.forEach(function (d) {
-      if (!KEYS.includes(d.id)) return;
+      if (!KEYS.includes(d.id) || d.id === "terox.payreq.v1") return;
       const val = d.data().value;
       localStorage.setItem(d.id, JSON.stringify(val));
     });
@@ -95,6 +100,16 @@ export function initSync() {
 
   // Listen for Firestore changes
   listenToFirestore();
+
+  // Payment decisions must arrive even while another local write is in flight.
+  // Never echo a stale pending request back on unrelated chat/typing events.
+  onSnapshot(doc(db, "data", "terox.payreq.v1"), { includeMetadataChanges: true }, function (snap) {
+    if (!snap.exists() || snap.metadata.hasPendingWrites || _payReqDirty) return;
+    var value = snap.data().value;
+    if (!Array.isArray(value)) return;
+    localStorage.setItem("terox.payreq.v1", JSON.stringify(value));
+    window.dispatchEvent(new CustomEvent("terox:change", { detail: { remote: true } }));
+  }, function (err) { console.warn("[Terox] Payment listener error:", err.message || err); });
 
   // Listen for localStorage changes → sync to Firestore
   window.addEventListener("terox:change", syncToFirestore);
