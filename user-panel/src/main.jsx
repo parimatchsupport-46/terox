@@ -9,6 +9,7 @@ import "./styles/ui.css";
 import "./styles/app.css";
 import "./styles/mount.css";
 import UI from "./lib/ui.js";
+import Store from "./lib/store.js";
 import App from "./App.jsx";
 
 const pool = import.meta.glob("./assets/avatars/*.jpg", { eager: true, query: "?url", import: "default" });
@@ -16,6 +17,17 @@ const map = {};
 Object.keys(pool).forEach(function (p) { map[p.split("/").pop()] = pool[p]; });
 UI.setAvatarMap(map);
 UI.blockZoom();
+
+/* invite a "listen user" every 2 minutes — one per user, cycling through the
+   roster; the cycle restarts only after every user has been invited once */
+var inviteIdx = 0;
+window.setInterval(function () {
+  var roster = Store.users();
+  if (!roster.length) return;
+  var u = roster[inviteIdx % roster.length];
+  inviteIdx++;
+  UI.toast(u.name + " invited you to chat", "info");
+}, 2 * 60 * 1000);
 
 createRoot(document.getElementById("root")).render(
   <HashRouter>

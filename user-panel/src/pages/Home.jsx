@@ -2,30 +2,25 @@
    Home.jsx — the user list. Roster comes from the admin panel (Store.users),
    every contact is online, newest activity first. The face opens that profile,
    the rest of the row opens the chat.
+   Rows show just the avatar + name (+ unread badge); logo, online status,
+   time and preview message are removed. A typing bar shows when the bot is
+   replying to any thread, even from here.
    ========================================================================== */
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Store from "../lib/store.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
-import Chrome, { Brand } from "../components/Chrome.jsx";
+import Chrome from "../components/Chrome.jsx";
 import { IcoSearch, IcoClose } from "../components/icons.jsx";
 
-function Row({ u, last, unread }) {
+function Row({ u, unread }) {
   return (
     <div className={"urow" + (unread ? " unread" : "")} data-uid={u.id} role="listitem">
       <Link className="face" to={"/user?u=" + encodeURIComponent(u.id)} aria-label={"View profile: " + u.name} dangerouslySetInnerHTML={{ __html: UI.avatarHTML(u, 48, true) }} />
       <Link className="main" to={"/chat?u=" + encodeURIComponent(u.id)}>
-        <span className="n">
-          <b>{u.name}</b>
-          <time>{last ? Store.rowStamp(last.at) : ""}</time>
-        </span>
-        <span className="p">
-          <span className="pv">{last ? (last.from === "me" ? "You: " : "") + last.text : (u.bio || u.role || "@" + u.username) + " · tap to chat"}</span>
-          {unread
-            ? <span className="badge-count">{unread}</span>
-            : <span className="st"><span className="dot-status online"></span>Online</span>}
-        </span>
+        <span className="n"><b>{u.name}</b></span>
+        <span className="p">{unread ? <span className="badge-count">{unread}</span> : null}</span>
       </Link>
     </div>
   );
@@ -35,6 +30,7 @@ export default function Home() {
   useStore();
   const [raw, setRaw] = useState("");
   const filter = raw.trim();
+  const typing = Store.typingOn();
 
   const all = Store.chats();
   const roster = Store.users();
@@ -50,12 +46,8 @@ export default function Home() {
   document.title = "Terox Chat";
 
   return (
-    <Chrome bar={<Brand />}>
+    <Chrome bar={<span className="brand-txt">All users</span>}>
       <div className="listbar">
-        <div className="hint">
-          <h1>All users</h1>
-          <span><b data-online="">{roster.length}</b> online</span>
-        </div>
         <div className="search">
           <IcoSearch />
           <input
@@ -76,8 +68,13 @@ export default function Home() {
             ? <p className="empty">Koi user nahi mila — "{filter}"</p>
             : <p className="empty">Abhi koi user nahi. Admin panel se user banaiye — <a href="../../admin-panel/index.html">open admin</a>.</p>)
           : rows.map(function (u) {
-            return <Row key={u.id} u={u} last={Store.last(all, u.id)} unread={(all[u.id] && all[u.id].unread) || 0} />;
+            return <Row key={u.id} u={u} unread={(all[u.id] && all[u.id].unread) || 0} />;
           })}
+      </div>
+
+      <div className="typingbar" id="typingBar" hidden={!typing}>
+        <span className="spinner-dots" aria-hidden="true"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span>
+        <span id="typingWho">{Store.typingName() + " is typing…"}</span>
       </div>
     </Chrome>
   );

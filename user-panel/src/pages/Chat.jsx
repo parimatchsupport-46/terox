@@ -17,46 +17,9 @@ import { IcoBack, IcoClose, IcoSend, IcoEmoji, IcoReply, IcoCopy, IcoEdit, IcoTr
 
 const EMOJI = ["👍", "🙏", "😄", "🔥", "🎉", "✅", "🚀", "❤️", "😅", "🤝"];
 
-/* ---- the rate card, exactly as agreed: duration + voice/video prices ---- */
-const RATE = [
-  { d: "5 min", v: 200, x: 500 },
-  { d: "10 min", v: 300, x: 1000 },
-  { d: "20 min", v: 600, x: 1500 },
-  { d: "30 min", v: 900, x: 2000 },
-  { d: "40 min", v: 1200, x: 2500 },
-  { d: "1 hour", v: 1800, x: 4000 }
-];
-const SECTIONS = [
-  { name: "Voice calling", key: "v" },
-  { name: "Video calling", key: "x" }
-];
-const NOTES = [];
-
-const FIRST_WAIT = 4000;
-const NEXT_WAIT = 500;
-const TYPING = 3000;
-const NEXT = { start: "services", "pick-service": "rates", "pick-plan": "pay", "pick-type": "pay", paid: "ack" };
-const PENDING = { services: "services", rates: "rates", pay: "pay" };
-
-function money(n) { return "₹" + n; }
-function price(d, key) {
-  const r = RATE.filter(function (x) { return x.d === d; })[0];
-  return r ? money(key === "x" ? r.x : r.v) : "—";
-}
 function snippet(s) {
   const one = String(s).replace(/\s+/g, " ").trim();
   return one.length > 72 ? one.slice(0, 71) + "…" : one;
-}
-function picksOf(list) {
-  const p = { d: null, svc: null, sec: null, mode: null, key: null, amount: null };
-  list.forEach(function (m) {
-    if (m.from !== "me" || !m.pick) return;
-    if (m.kind === "pick-service") { p.svc = m.pick.svc; p.sec = m.pick.sec; p.mode = m.pick.mode; p.key = m.pick.key; }
-    if (m.kind === "pick-plan") { p.d = m.pick.d; p.svc = m.pick.svc; p.sec = m.pick.sec; }
-    if (m.kind === "pick-type" || m.kind === "paid") { p.mode = m.pick.mode; p.key = m.pick.key; }
-  });
-  p.amount = p.d ? price(p.d, p.key || p.sec) : null;
-  return p;
 }
 
 export default function Chat() {
@@ -70,8 +33,7 @@ export default function Chat() {
   const msgs = Store.thread(uid).messages;
   const prefs = Store.prefs();
 
-  const [typing, setTyping] = useState(false);
-  const [step, setStep] = useState(null);
+  const typing = Store.typingOn();
   const [raw, setRaw] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -93,46 +55,24 @@ export default function Chat() {
   const lastFocus = useRef(null);
   const seen = useRef(0);
 
-  const picks = picksOf(msgs);
+  const picks = Store.picksOf(msgs);
   const editMsg = editingId ? Store.find(uid, editingId) : null;
   const sheetMsg = sheetId ? Store.find(uid, sheetId) : null;
   const orig = replyTo ? Store.find(uid, replyTo) : null;
 
   document.title = user.name + " · Terox Chat";
 
-  /* ---------- the scripted beat ---------- */
-  function send(step) {
-    const p = picksOf(Store.thread(uid).messages);
-    if (step === "services") Store.receive(uid, "Select your type options", { kind: "services" });
-    if (step === "rates") Store.receive(uid, "Select your plan below", { kind: "rates", pick: { key: p.key, svc: p.svc, sec: p.sec } });
-    if (step === "pay") Store.receive(uid, "Please complete the payment to start the service.", { kind: "pay", pick: { d: p.d, svc: p.svc, mode: p.mode, key: p.key, amount: p.amount } });
-    if (step === "ack") Store.receive(uid, "Payment mil gaya ✅ " + (p.mode || "Call") + " · " + (p.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
-  }
-
-  useEffect(function () {
-    if (!step) return undefined;
-    const pre = step === "services" ? FIRST_WAIT : NEXT_WAIT;
-    let t2 = null;
-    const t1 = window.setTimeout(function () {
-      setTyping(true);
-      t2 = window.setTimeout(function () {
-        setTyping(false);
-        send(step);
-        setStep(null);
-      }, TYPING);
-    }, pre);
-    return function () { window.clearTimeout(t1); if (t2) window.clearTimeout(t2); setTyping(false); };
-  }, [step]);
-
   useEffect(function () {
     Store.markRead(uid);
+    Store.cancelReply(uid);
     const last = Store.thread(uid).messages.slice(-1)[0];
-    setStep(last && last.from === "me" && NEXT[last.kind] ? NEXT[last.kind] : null);
+    if (last && last.from === "me" && Store.NEXT[last.kind]) Store.queueReply(uid, Store.NEXT[last.kind]);
     setRaw(""); setReplyTo(null); setEditingId(null);
     setSheetId(null); setSheetOn(false); setSheetScrim(false);
     setPayMsg(null); setPayOpen(false);
     seen.current = 0;
-    return function () { setStep(null); };
+    /* no cancelReply in cleanup: a reply in progress keeps going when the
+       user navigates away, so the typing bar shows on the home page too */
   }, [uid]);
 
   useEffect(function () {
@@ -174,9 +114,9 @@ export default function Chat() {
     setReplyTo(null);
     setRaw("");
     const last = Store.thread(uid).messages.slice(-1)[0];
-    if (last && !NEXT[last.kind]) {
+    if (last && !Store.NEXT[last.kind]) {
       const lastPeer = Store.thread(uid).messages.filter(function (m) { return m.from === "them"; }).pop();
-      if (lastPeer && PENDING[lastPeer.kind]) setStep(PENDING[lastPeer.kind]);
+      if (lastPeer && Store.PENDING[lastPeer.kind]) Store.queueReply(uid, Store.PENDING[lastPeer.kind]);
     }
   }
 
@@ -191,14 +131,14 @@ export default function Chat() {
   /* ---------- the flow's own sends ---------- */
   function startChat() {
     Store.append(uid, "Hello 👋", { kind: "start" });
-    setStep("services");
+    Store.queueReply(uid, "services");
   }
   function sendPick(text, kind, pick) {
     const peer = Store.thread(uid).messages.filter(function (m) { return m.from === "them"; }).pop();
     const opts = { kind: kind, pick: pick || null };
     if (peer) opts.replyTo = peer.id;
     Store.append(uid, text, opts);
-    setStep(NEXT[kind] || null);
+    Store.queueReply(uid, Store.NEXT[kind] || null);
   }
 
   /* ---------- action sheet ---------- */
@@ -294,10 +234,10 @@ export default function Chat() {
        The head and its rows are siblings inside .opts, no wrapper, so the
        flex gaps line up */
     const kids = [];
-    const sec = SECTIONS.filter(function (s) { return s.key === secKey; })[0] || SECTIONS[0];
+    const sec = Store.SECTIONS.filter(function (s) { return s.key === secKey; })[0] || Store.SECTIONS[0];
     kids.push(<p className="opts-h" key={sec.key + "-h"}>{sec.name}</p>);
-    RATE.forEach(function (r) {
-      const amt = money(secKey === "x" ? r.x : r.v);
+    Store.RATE.forEach(function (r) {
+      const amt = Store.money(secKey === "x" ? r.x : r.v);
       kids.push(
         <button className="opt" type="button" key={secKey + r.d} onClick={function (e) {
           e.stopPropagation();
@@ -493,18 +433,11 @@ export default function Chat() {
             <button className="btn block" type="button" id="startChat" onClick={startChat}>Start chat — say hello 👋</button>
           </div>
         ) : rows}
-        {typing && (
-          <div className="msg typing" id="typingRow">
-            <span className="bubble">
-              <span className="spinner-dots" role="status" aria-label="typing"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span>
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="typingbar" id="typingBar" hidden={!typing}>
         <span className="spinner-dots" aria-hidden="true"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span>
-        <span id="typingWho">{first + " is typing…"}</span>
+        <span id="typingWho">{Store.typingName() + " is typing…"}</span>
       </div>
 
       <form className="composer" id="composer" autoComplete="off" onSubmit={submit}>
