@@ -2,8 +2,8 @@
    Home.jsx — the user list. Roster comes from the admin panel (Store.users),
    every contact is online, newest activity first. The face opens that profile,
    the rest of the row opens the chat.
-   Rows show just the avatar + name (+ unread badge); online status,
-   time and preview message are removed. A typing bar shows when the bot is
+   Rows show the avatar, name, online status and unread badge;
+   time and preview message are omitted. A typing bar shows when the bot is
    replying to any thread, even from here.
    ========================================================================== */
 import { useState } from "react";
@@ -20,7 +20,10 @@ function Row({ u, unread }) {
       <Link className="face" to={"/user?u=" + encodeURIComponent(u.id)} aria-label={"View profile: " + u.name} dangerouslySetInnerHTML={{ __html: UI.avatarHTML(u, 48, true) }} />
       <Link className="main" to={"/chat?u=" + encodeURIComponent(u.id)}>
         <span className="n"><b>{u.name}</b></span>
-        <span className="p">{unread ? <span className="badge-count">{unread}</span> : null}</span>
+        <span className="p">
+          <span className="st"><span className="dot-status online"></span>Online</span>
+          {unread ? <span className="badge-count">{unread}</span> : null}
+        </span>
       </Link>
     </div>
   );
@@ -48,6 +51,10 @@ export default function Home() {
   return (
     <Chrome bar={<Brand />}>
       <div className="listbar">
+        <div className="hint">
+          <h1>All users</h1>
+          <span><b data-online="">{roster.length}</b> online</span>
+        </div>
         <div className="search">
           <IcoSearch />
           <input
