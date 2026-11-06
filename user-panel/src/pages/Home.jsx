@@ -2,7 +2,7 @@
    Home.jsx — the user list. Roster comes from the admin panel (Store.users),
    every contact is online, newest activity first. The face opens that profile,
    the rest of the row opens the chat.
-   Rows show just the avatar + name (+ unread badge); logo, online status,
+   Rows show just the avatar + name (+ unread badge); online status,
    time and preview message are removed. A typing bar shows when the bot is
    replying to any thread, even from here.
    ========================================================================== */
@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import Store from "../lib/store.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
-import Chrome from "../components/Chrome.jsx";
+import Chrome, { Brand } from "../components/Chrome.jsx";
 import { IcoSearch, IcoClose } from "../components/icons.jsx";
 
 function Row({ u, unread }) {
@@ -46,7 +46,7 @@ export default function Home() {
   document.title = "Terox Chat";
 
   return (
-    <Chrome bar={<span className="brand-txt">All users</span>}>
+    <Chrome bar={<Brand />}>
       <div className="listbar">
         <div className="search">
           <IcoSearch />
