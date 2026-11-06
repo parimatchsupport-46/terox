@@ -565,6 +565,42 @@
 .verify-bad { color: var(--no); }
 
 /* ==========================================================================
+   Settings page
+   ========================================================================== */
+.settings-page { display: flex; flex-direction: column; gap: 16px; max-width: 600px; }
+.settings-section { background: var(--bg-elev); border-radius: 14px; padding: 20px; border: 1px solid var(--border); }
+.settings-title { font-size: 1rem; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.01em; }
+.settings-desc { font-size: .82rem; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+
+.qr-preview-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+.qr-preview-box { width: 160px; height: 160px; border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--bg); overflow: hidden; }
+.qr-preview-img { width: 100%; height: 100%; object-fit: contain; }
+.qr-preview-placeholder { font-size: .75rem; color: var(--muted); text-align: center; padding: 8px; }
+
+.settings-field { margin-bottom: 14px; }
+.settings-field label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 6px; }
+.settings-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--fg); font-size: .9rem; }
+.qr-upload-label { display: inline-block; padding: 8px 16px; border: 1px dashed var(--border); border-radius: 10px; font-size: .85rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; }
+.qr-upload-label:hover { border-color: var(--accent); color: var(--accent); }
+
+.settings-actions { display: flex; gap: 8px; margin-top: 16px; }
+.settings-actions .btn { flex: 1; }
+
+/* sidebar nav button (settings link in drawer) */
+.drawer-nav-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 16px; border: none; background: transparent; border-radius: 10px; font-size: .9rem; font-weight: 600; color: var(--muted); cursor: pointer; text-align: left; transition: all .15s; }
+.drawer-nav-btn:hover { background: var(--bg); color: var(--fg); }
+.drawer-nav-btn svg { width: 20px; height: 20px; }
+
+/* desktop sidebar — settings button styling */
+@media (min-width: 1024px) {
+  #adminDrawer nav .drawer-nav-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 10px;
+  }
+}
+
+/* ==========================================================================
    Desktop responsive styles for admin panel
    Overrides mobile constraints on wider screens
    ========================================================================== */

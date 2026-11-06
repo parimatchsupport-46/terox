@@ -80,6 +80,7 @@ function AdminChrome({ tab, setTab, children }) {
               Payments
               {Store.pendingPayReqs().length > 0 && <span className="badge-count">{Store.pendingPayReqs().length}</span>}
             </button>
+            <button className={"admin-tab" + (tab === "settings" ? " active" : "")} onClick={function () { setTab("settings"); }}>Settings</button>
           </div>
           {children}
         </div>
@@ -100,6 +101,7 @@ function AdminChrome({ tab, setTab, children }) {
           <Link to="/chat" onClick={go}><IcoNavChat />Chat</Link>
           <Link to="/profile" onClick={go}><IcoNavProfile />Profile</Link>
           <Link to="/admin" onClick={go} className="active"><IcoMenu />Admin</Link>
+          <button className="drawer-nav-btn" onClick={function () { setTab("settings"); go(); }}><IcoClose />Settings</button>
         </nav>
         <div className="drawer-foot">
           <p className="ver">Terox Admin · v1.0</p>
@@ -318,6 +320,93 @@ function Payments() {
   );
 }
 
+/* ---------------- Settings ---------------- */
+function Settings() {
+  useStore();
+  const [qrUrl, setQrUrl] = useState(Store.qr() || "");
+  const [saved, setSaved] = useState(false);
+
+  function onFile(e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { UI.toast("Image too large — max 5MB", "err"); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      setQrUrl(reader.result);
+      Store.saveQr(reader.result);
+      setSaved(true);
+      window.setTimeout(function () { setSaved(false); }, 2000);
+      UI.toast("QR updated from image", "ok");
+    };
+    reader.readAsDataURL(f);
+    e.target.value = "";
+  }
+
+  function save() {
+    if (!qrUrl.trim()) { UI.toast("Paste a QR URL first", "err"); return; }
+    Store.saveQr(qrUrl.trim());
+    setSaved(true);
+    window.setTimeout(function () { setSaved(false); }, 2000);
+    UI.toast("QR code updated", "ok");
+  }
+
+  function reset() {
+    Store.saveQr("");
+    setQrUrl("");
+    UI.toast("QR reset to default", "info");
+  }
+
+  var preview = qrUrl.trim()
+    ? qrUrl.startsWith("http") || qrUrl.startsWith("data:")
+      ? qrUrl
+      : null
+    : null;
+
+  return (
+    <div className="settings-page">
+      <div className="settings-section card">
+        <h3 className="settings-title">Payment QR Code</h3>
+        <p className="settings-desc">Update the QR code shown in the user panel's payment dialog. Paste a URL or upload an image (JPG, PNG, max 5MB).</p>
+
+        <div className="qr-preview-wrap">
+          <div className="qr-preview-box">
+            {preview
+              ? <img src={preview} alt="QR preview" className="qr-preview-img" />
+              : <span className="qr-preview-placeholder">No QR set — default placeholder will show</span>}
+          </div>
+        </div>
+
+        <div className="settings-field">
+          <label htmlFor="qrUrlInput">QR Image URL</label>
+          <input
+            id="qrUrlInput"
+            type="url"
+            className="settings-input"
+            placeholder="https://example.com/qr.png"
+            value={qrUrl}
+            onChange={function (e) { setQrUrl(e.target.value); }}
+          />
+        </div>
+
+        <div className="settings-field">
+          <label className="qr-upload-label" htmlFor="qrFileInput">Or upload image</label>
+          <input id="qrFileInput" type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} hidden />
+        </div>
+
+        <div className="settings-actions">
+          <button className="btn yes" onClick={save}>{saved ? "Saved ✓" : "Save QR"}</button>
+          <button className="btn ghost" onClick={reset}>Reset to Default</button>
+        </div>
+      </div>
+
+      <div className="settings-section card">
+        <h3 className="settings-title">About</h3>
+        <p className="settings-desc">Terox Admin Panel · v1.0. This panel manages users, payment verification, and QR code settings. Data syncs to Firestore so both panels stay in sync.</p>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Main ---------------- */
 export default function Admin() {
   const [tab, setTab] = useState("dash");
@@ -326,6 +415,7 @@ export default function Admin() {
       {tab === "dash" && <Dashboard />}
       {tab === "users" && <Users />}
       {tab === "pays" && <Payments />}
+      {tab === "settings" && <Settings />}
     </AdminChrome>
   );
 }

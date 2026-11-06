@@ -20,7 +20,8 @@ const KEYS = [
   "terox.profile.v1",
   "terox.prefs.v1",
   "terox.users.v1",
-  "terox.payreq.v1"
+  "terox.payreq.v1",
+  "terox.qr.v1"
 ];
 
 let _initialized = false;

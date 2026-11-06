@@ -12,7 +12,7 @@ import Store from "../lib/store.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
 import Chrome from "../components/Chrome.jsx";
-import QR from "../lib/qr.js";
+import QR_DEFAULT from "../lib/qr.js";
 import { IcoBack, IcoClose, IcoSend, IcoEmoji, IcoReply, IcoCopy, IcoEdit, IcoTrash } from "../components/icons.jsx";
 
 const EMOJI = ["👍", "🙏", "😄", "🔥", "🎉", "✅", "🚀", "❤️", "😅", "🤝"];
@@ -461,7 +461,12 @@ export default function Chat() {
             <button className="icon-btn" type="button" id="payClose" aria-label="Close payment" onClick={closePay}><IcoClose sw={2.4} /></button>
           </div>
           <div className="pay-body">
-            <div className="pay-qr" dangerouslySetInnerHTML={{ __html: QR }} />
+            <div className="pay-qr">{(function () {
+              var qr = Store.qr();
+              if (!qr) return <span dangerouslySetInnerHTML={{ __html: QR_DEFAULT }} />;
+              if (qr.startsWith("http") || qr.startsWith("data:")) return <img src={qr} alt="QR code" className="pay-qr-img" />;
+              return <span dangerouslySetInnerHTML={{ __html: QR_DEFAULT }} />;
+            })()}</div>
             <dl className="pay-rows">
               <div><dt>To</dt><dd id="payTo">terox@ybl</dd></div>
               <div><dt>Service</dt><dd id="payService">{pay.mode || pay.svc || "—"}</dd></div>
