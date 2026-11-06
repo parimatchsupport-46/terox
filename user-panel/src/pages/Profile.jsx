@@ -20,8 +20,7 @@ const TINTS = [
 ];
 const PREFS = [
   { id: "notifications", t: "Notifications", d: "Alert me when a new message arrives" },
-  { id: "sounds", t: "Message sounds", d: "Short chime on send and receive" },
-  { id: "enterToSend", t: "Enter sends message", d: "Off = Enter adds a new line" }
+  { id: "sounds", t: "Message sounds", d: "Short chime on send and receive" }
 ];
 
 export default function Profile() {

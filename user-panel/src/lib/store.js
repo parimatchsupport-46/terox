@@ -760,7 +760,7 @@ const Store = (function () {
     return p;
   }
   var _replies = {};
-  var _typing = { on: false, name: "" };
+  var _typing = { on: false, name: "", uid: null };
   function queueReply(uid, step) {
     if (!step) { cancelReply(uid); return; }
     cancelReply(uid);
@@ -771,9 +771,9 @@ const Store = (function () {
     var u = users().filter(function (x) { return x.id === uid; })[0];
     if (u) nm = u.name;
     rec.t1 = setTimeout(function () {
-      setTyping(true, nm);
+      setTyping(true, nm, uid);
       rec.t2 = setTimeout(function () {
-        setTyping(false, "");
+        if (_typing.uid === uid) setTyping(false, "");
         sendReply(uid, step);
         cancelReply(uid);
       }, TYPING);
@@ -785,6 +785,7 @@ const Store = (function () {
     if (rec.t1) clearTimeout(rec.t1);
     if (rec.t2) clearTimeout(rec.t2);
     delete _replies[uid];
+    if (_typing.uid === uid) setTyping(false, "");
   }
   function sendReply(uid, step) {
     var p = picksOf(thread(uid).messages);
@@ -793,9 +794,10 @@ const Store = (function () {
     if (step === "pay") receive(uid, "Please complete the payment to start the service.", { kind: "pay", pick: { d: p.d, svc: p.svc, mode: p.mode, key: p.key, amount: p.amount } });
     if (step === "ack") receive(uid, "Payment mil gaya ✅ " + (p.mode || "Call") + " · " + (p.d || "") + " — ab connect kar raha hoon.", { kind: "ack" });
   }
-  function setTyping(on, name) {
+  function setTyping(on, name, uid) {
     _typing.on = !!on;
     _typing.name = name || "";
+    _typing.uid = on ? uid || null : null;
     window.dispatchEvent(new Event("terox:change"));
   }
   function typingOn() { return _typing.on; }

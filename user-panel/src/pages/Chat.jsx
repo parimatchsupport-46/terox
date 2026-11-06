@@ -1,9 +1,9 @@
 /* ==========================================================================
-   Chat.jsx — thread, composer, the tap-to-open action sheet and the scripted
+   Chat.jsx — option-only thread, action sheet and scripted
    peer. The thread always starts empty: A taps "Start chat" to say hello, B
    answers on the same beat as before (4s pause, 3s of typing, then the rate
    card), every option is a button that sends that choice, and the last step
-   opens the payment dialog. Markup, classes and ids are the ones the
+   opens the payment page. Markup, classes and ids are the ones the
    stylesheet already knew; only the plumbing is React.
    ========================================================================== */
 import { useEffect, useRef, useState } from "react";
@@ -12,10 +12,7 @@ import Store from "../lib/store.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
 import Chrome from "../components/Chrome.jsx";
-import QR_DEFAULT from "../lib/qr.js";
-import { IcoBack, IcoClose, IcoSend, IcoEmoji, IcoReply, IcoCopy, IcoEdit, IcoTrash } from "../components/icons.jsx";
-
-const EMOJI = ["👍", "🙏", "😄", "🔥", "🎉", "✅", "🚀", "❤️", "😅", "🤝"];
+import { IcoBack, IcoCopy, IcoTrash } from "../components/icons.jsx";
 
 function snippet(s) {
   const one = String(s).replace(/\s+/g, " ").trim();
@@ -31,43 +28,29 @@ export default function Chat() {
   const uid = user.id;
   const first = user.name.split(" ")[0];
   const msgs = Store.thread(uid).messages;
-  const prefs = Store.prefs();
   // Already-present messages remain still; only messages added in this visit animate.
   const initialMessages = useRef({ uid: uid, ids: new Set(msgs.map(function (m) { return m.id; })) });
   if (initialMessages.current.uid !== uid) {
     initialMessages.current = { uid: uid, ids: new Set(msgs.map(function (m) { return m.id; })) };
   }
 
-  const typing = Store.typingOn();
+  const typing = Store.typingOn() && Store.typingName() === user.name;
   const navigate = useNavigate();
-  const [raw, setRaw] = useState("");
-  const [replyTo, setReplyTo] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [emojiOpen, setEmojiOpen] = useState(false);
   const [sheetId, setSheetId] = useState(null);
   const [sheetOn, setSheetOn] = useState(false);
   const [sheetScrim, setSheetScrim] = useState(false);
   const [sheetShow, setSheetShow] = useState(false);
   const [sheetAria, setSheetAria] = useState(undefined);
-  const [payOpen, setPayOpen] = useState(false);
-  const [payMsg, setPayMsg] = useState(null);
-  const [payUtr, setPayUtr] = useState("");
-  const [payProof, setPayProof] = useState(null);
-  const [paySecs, setPaySecs] = useState(900);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState("verifying"); // "verifying" | "accepted" | "rejected"
   const [verifyReqId, setVerifyReqId] = useState(null);
 
   const thread = useRef(null);
-  const area = useRef(null);
   const sheetBtn = useRef(null);
   const lastFocus = useRef(null);
   const seen = useRef(0);
 
-  const picks = Store.picksOf(msgs);
-  const editMsg = editingId ? Store.find(uid, editingId) : null;
   const sheetMsg = sheetId ? Store.find(uid, sheetId) : null;
-  const orig = replyTo ? Store.find(uid, replyTo) : null;
 
   document.title = user.name + " · Terox Chat";
 
@@ -76,9 +59,7 @@ export default function Chat() {
     Store.cancelReply(uid);
     const last = Store.thread(uid).messages.slice(-1)[0];
     if (last && last.from === "me" && Store.NEXT[last.kind]) Store.queueReply(uid, Store.NEXT[last.kind]);
-    setRaw(""); setReplyTo(null); setEditingId(null);
     setSheetId(null); setSheetOn(false); setSheetScrim(false);
-    setPayMsg(null); setPayOpen(false);
     seen.current = 0;
     /* restore a pending payment verification if the user navigates back */
     var pendingReq = Store.payReqForUser(uid);
@@ -119,50 +100,6 @@ export default function Chat() {
     else el.scrollTop = el.scrollHeight;
   }, [msgs.length, typing]);
 
-  /* the composer only takes an inline height once it has been used - before
-     that it keeps its natural one, which is what the page did on load */
-  const sized = useRef(false);
-  useEffect(function () {
-    const el = area.current;
-    if (!el || (!raw && !sized.current)) return;
-    sized.current = true;
-    el.style.height = "auto";
-    el.style.height = Math.min(120, Math.max(44, el.scrollHeight)) + "px";
-  }, [raw]);
-
-  /* ---------- composer ---------- */
-  const len = raw.length;
-  const sendDisabled = !raw.trim() || (!!editingId && raw.trim() === ((editMsg && editMsg.text) || ""));
-
-  function submit(e) {
-    e.preventDefault();
-    const text = raw.trim();
-    if (!text) return;
-    if (editingId) {
-      Store.edit(uid, editingId, text);
-      setEditingId(null);
-      setRaw("");
-      UI.toast("Message edited", "ok");
-      return;
-    }
-    Store.append(uid, text, replyTo ? { replyTo: replyTo } : null);
-    setReplyTo(null);
-    setRaw("");
-    const last = Store.thread(uid).messages.slice(-1)[0];
-    if (last && !Store.NEXT[last.kind]) {
-      const lastPeer = Store.thread(uid).messages.filter(function (m) { return m.from === "them"; }).pop();
-      if (lastPeer && Store.PENDING[lastPeer.kind]) Store.queueReply(uid, Store.PENDING[lastPeer.kind]);
-    }
-  }
-
-  function keydown(e) {
-    const enterSends = prefs.enterToSend;
-    if (e.key === "Enter" && !e.shiftKey && (enterSends || e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      submit(e);
-    }
-  }
-
   /* ---------- the flow's own sends ---------- */
   function startChat() {
     Store.append(uid, "Hello 👋", { kind: "start" });
@@ -200,19 +137,9 @@ export default function Chat() {
   function act(kind) {
     const m = sheetId ? Store.find(uid, sheetId) : null;
     if (!m) return closeSheet();
-    if (kind === "reply") {
-      setReplyTo(m.id); setEditingId(null); closeSheet();
-      if (area.current) area.current.focus({ preventScroll: true });
-      return;
-    }
     if (kind === "copy") {
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(m.text).then(function () { UI.toast("Message copied", "ok"); });
       closeSheet();
-      return;
-    }
-    if (kind === "edit") {
-      setEditingId(m.id); setReplyTo(null); setRaw(m.text); closeSheet();
-      if (area.current) { area.current.focus({ preventScroll: true }); const n = m.text.length; if (area.current.setSelectionRange) area.current.setSelectionRange(n, n); }
       return;
     }
     if (kind === "delete") {
@@ -227,34 +154,8 @@ export default function Chat() {
     }
   }
 
-  /* ---------- payment dialog ---------- */
-  function openPay(m) { navigate("/pay?uid=" + encodeURIComponent(uid)); }
-  function closePay() { setPayOpen(false); setPayMsg(null); setPayUtr(""); document.body.classList.remove("locked"); }
-  function mmss(s) { var m = Math.floor(s / 60); var r = s % 60; return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r; }
-  /* tapping "Payment Complete" (UTR must be filled) creates a payment request
-     in the store, closes the pay dialog and opens the verification popup.
-     The popup stays open until the admin panel accepts or rejects the request. */
-  function completePay() {
-    if (!payUtr || !payUtr.trim()) { UI.toast("UTR number fill kijiye", "bad"); return; }
-    var p = (payMsg && payMsg.pick) || {};
-    var req = {
-      id: "pr" + Date.now().toString(36),
-      uid: uid,
-      utr: payUtr.trim(),
-      amount: p.amount || "",
-      service: p.mode || p.svc || "",
-      plan: p.d || "",
-      mode: p.mode || "",
-      proof: payProof || null,
-      status: "pending",
-      at: Date.now()
-    };
-    Store.addPayReq(req);
-    setVerifyReqId(req.id);
-    setVerifyStatus("verifying");
-    closePay();
-    setVerifyOpen(true);
-  }
+  /* Payment opens on its own page. */
+  function openPay() { navigate("/pay?uid=" + encodeURIComponent(uid)); }
   function closeVerify() { setVerifyOpen(false); setVerifyStatus("verifying"); setVerifyReqId(null); }
 
   /* poll the store for the payment request status while the verify popup is
@@ -290,27 +191,11 @@ export default function Chat() {
     return function () { clearInterval(t); };
   }, [verifyOpen, verifyReqId, verifyStatus]);
 
-  function onProofFile(e) {
-    var f = e.target.files && e.target.files[0];
-    if (!f) return;
-    if (!f.type.startsWith("image/")) { UI.toast("Image hi upload karo", "bad"); return; }
-    if (f.size > 5 * 1024 * 1024) { UI.toast("Image 5MB se kam honi chahiye", "bad"); return; }
-    var reader = new FileReader();
-    reader.onload = function () { setPayProof(reader.result); };
-    reader.readAsDataURL(f);
-  }
-
   useEffect(function () {
-    function key(e) { if (e.key === "Escape") { if (payOpen) closePay(); else if (sheetOn) closeSheet(); } }
+    function key(e) { if (e.key === "Escape" && sheetOn) closeSheet(); }
     document.addEventListener("keydown", key);
     return function () { document.removeEventListener("keydown", key); };
-  }, [payOpen, sheetOn]);
-  /* countdown timer while the pay dialog is open (15-min QR validity) */
-  useEffect(function () {
-    if (!payOpen) return;
-    var t = setInterval(function () { setPaySecs(function (s) { return s > 0 ? s - 1 : 0; }); }, 1000);
-    return function () { clearInterval(t); };
-  }, [payOpen]);
+  }, [sheetOn]);
   useEffect(function () { return function () { document.body.classList.remove("locked"); }; }, []);
 
   function jumpTo(id) {
@@ -398,7 +283,7 @@ export default function Chat() {
           tabIndex="0"
           aria-label="Message options"
           onClick={function (e) { if (e.target.closest && e.target.closest(".opt, .pay-now")) return; openSheet(m.id); }}
-          onKeyDown={function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSheet(m.id); } }}
+          onKeyDown={function (e) { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openSheet(m.id); } }}
         >
           {m.replyTo && (quoted ? (
             <span className="quote" onClick={function (e) { e.stopPropagation(); jumpTo(m.replyTo); }}>
@@ -430,11 +315,6 @@ export default function Chat() {
     rows.push(bubble(m));
   });
 
-  const hint = prefs.enterToSend
-    ? "Tap a message to reply, copy, edit or delete"
-    : "Send button bhejta hai · Enter = new line";
-  const pay = (payMsg && payMsg.pick) || {};
-
   const overlays = (
     <>
       <button className={"scrim" + (sheetShow ? " show" : "")} id="sheetScrim" hidden={!sheetScrim} aria-hidden="true" tabIndex={-1} onClick={closeSheet} />
@@ -450,9 +330,7 @@ export default function Chat() {
           </div>
         </div>
         <div className="sheet-actions">
-          <button type="button" data-act="reply" ref={sheetBtn} onClick={function () { act("reply"); }}><IcoReply />Reply</button>
-          <button type="button" data-act="copy" onClick={function () { act("copy"); }}><IcoCopy />Copy</button>
-          <button type="button" data-act="edit" onClick={function () { act("edit"); }}><IcoEdit />Edit</button>
+          <button type="button" data-act="copy" ref={sheetBtn} onClick={function () { act("copy"); }}><IcoCopy />Copy</button>
           <button type="button" data-act="delete" className="danger" onClick={function () { act("delete"); }}><IcoTrash />Delete</button>
         </div>
         <div className="sheet-foot">
@@ -514,48 +392,16 @@ export default function Chat() {
             <button className="btn block" type="button" id="startChat" onClick={startChat}>Start chat — say hello 👋</button>
           </div>
         ) : rows}
+        {typing && (
+          <div className="chat-typing" role="status" aria-label={user.name + " is typing"}>
+            <span className="chat-typing-avatar" aria-hidden="true" dangerouslySetInnerHTML={{ __html: UI.avatarHTML(user, 36, false) }} />
+            <div className="chat-typing-content">
+              <span className="chat-typing-name">{first} is typing</span>
+              <span className="chat-typing-bubble" aria-hidden="true"><span></span><span></span><span></span></span>
+            </div>
+          </div>
+        )}
       </div>
-
-      <div className="typingbar" id="typingBar" hidden={!typing}>
-        <span className="spinner-dots" aria-hidden="true"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span>
-        <span id="typingWho">{Store.typingName() + " is typing…"}</span>
-      </div>
-
-      <form className="composer" id="composer" autoComplete="off" onSubmit={submit}>
-        <div className="ctx" id="ctxReply" hidden={!replyTo}>
-          <span className="k">Reply to <b id="replyWho">{orig ? (orig.from === "me" ? "yourself" : user.name) : "—"}</b></span>
-          <span className="muted" id="replyText" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{orig ? snippet(orig.text) : "message deleted"}</span>
-          <span className="x"><button className="cx" type="button" id="replyCancel" aria-label="Cancel reply" onClick={function () { setReplyTo(null); }}>
-            <IcoClose sw={2.4} />
-          </button></span>
-        </div>
-
-        <div className="ctx edit" id="ctxEdit" hidden={!editingId}>
-          <span className="k">Editing message</span>
-          <span className="x" style={{ marginLeft: "auto" }}><button className="cx" type="button" id="editCancel" aria-label="Cancel edit" onClick={function () { setEditingId(null); setRaw(""); }}>
-            <IcoClose sw={2.4} />
-          </button></span>
-        </div>
-
-        <div className={"emoji" + (emojiOpen ? " open" : "")} id="emojiRow" role="group" aria-label="Quick emoji">
-          {EMOJI.map(function (e) {
-            return <button type="button" key={e} aria-label={"Insert " + e} onClick={function () { setRaw(raw + e); if (area.current) area.current.focus({ preventScroll: true }); }}>{e}</button>;
-          })}
-        </div>
-
-        <div className="crow">
-          <button className="icon-btn" type="button" id="emojiBtn" aria-label="Insert emoji" aria-expanded={String(emojiOpen)} onClick={function () { setEmojiOpen(!emojiOpen); }}>
-            <IcoEmoji />
-          </button>
-          <textarea id="input" ref={area} rows="1" placeholder="Message" aria-label="Message" enterKeyHint="send" autoCapitalize="sentences" value={raw} onChange={function (e) { setRaw(e.target.value); }} onKeyDown={keydown} />
-          <button className="send" type="submit" id="sendBtn" disabled={sendDisabled} aria-label="Send message"><IcoSend /></button>
-        </div>
-
-        <div className="chelp">
-          <span id="hint">{hint}</span>
-          <span id="counter" hidden={len < 3000}>{len + "/4000"}</span>
-        </div>
-      </form>
     </Chrome>
   );
 }
