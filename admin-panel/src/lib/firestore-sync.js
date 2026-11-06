@@ -20,8 +20,7 @@ const KEYS = [
   "terox.profile.v1",
   "terox.prefs.v1",
   "terox.users.v1",
-  "terox.payreq.v1",
-  "terox.qr.v1"
+  "terox.payreq.v1"
 ];
 
 let _initialized = false;
@@ -33,10 +32,11 @@ async function loadFromFirestore() {
   try {
     const snap = await getDocs(collection(db, "data"));
     snap.forEach(function (d) {
+      if (!KEYS.includes(d.id)) return;
       const val = d.data().value;
       localStorage.setItem(d.id, JSON.stringify(val));
     });
-    window.dispatchEvent(new Event("terox:change"));
+    window.dispatchEvent(new CustomEvent("terox:change", { detail: { remote: true } }));
     console.log("[Terox] Firestore sync: loaded", snap.size, "documents");
   } catch (e) {
     console.warn("[Terox] Firestore load failed:", e.message || e);
@@ -44,8 +44,8 @@ async function loadFromFirestore() {
 }
 
 /* Debounced sync: push localStorage → Firestore */
-function syncToFirestore() {
-  if (_syncing) return;
+function syncToFirestore(event) {
+  if (_syncing || event?.detail?.remote) return;
   if (_debounceTimer) clearTimeout(_debounceTimer);
   _debounceTimer = setTimeout(function () {
     _debounceTimer = null;
@@ -73,10 +73,11 @@ function listenToFirestore() {
     if (_syncing) return;
     _syncing = true;
     snap.forEach(function (d) {
+      if (!KEYS.includes(d.id)) return;
       const val = d.data().value;
       localStorage.setItem(d.id, JSON.stringify(val));
     });
-    window.dispatchEvent(new Event("terox:change"));
+    window.dispatchEvent(new CustomEvent("terox:change", { detail: { remote: true } }));
     _syncing = false;
   }, function (err) {
     console.warn("[Terox] Firestore listener error:", err.message || err);
@@ -94,6 +95,14 @@ export function initSync() {
 
   // Listen for Firestore changes
   listenToFirestore();
+
+  // QR is admin-owned: never publish a stale local copy from either panel.
+  onSnapshot(doc(db, "data", "terox.qr.v1"), function (snap) {
+    if (snap.metadata.hasPendingWrites) return;
+    const value = snap.exists() && typeof snap.data().value === "string" ? snap.data().value : "";
+    localStorage.setItem("terox.qr.v1", JSON.stringify(value));
+    window.dispatchEvent(new CustomEvent("terox:change", { detail: { remote: true } }));
+  }, function (err) { console.warn("[Terox] QR sync failed:", err.message || err); });
 
   // Listen for localStorage changes → sync to Firestore
   window.addEventListener("terox:change", syncToFirestore);

@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Store from "../lib/store.js";
+import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
 import logo from "../assets/logo.png";
 import { IcoMenu, IcoClose, IcoNavHome, IcoNavChat, IcoNavProfile } from "./icons.jsx";
@@ -120,6 +121,12 @@ export default function Chrome({ full, bar, bodyStyle, overlays, children }) {
           </Link>
         </nav>
         <div className="drawer-foot">
+          <div className="rowline">
+            <span className="tl">Appearance</span>
+            <button className="btn ghost sm" type="button" onClick={UI.toggleTheme} aria-label="Switch light or dark mode">
+              {document.documentElement.getAttribute("data-theme") === "dark" ? "☀️ Light mode" : "🌙 Dark mode"}
+            </button>
+          </div>
           <p className="ver"><img className="ver-logo" src={logo} alt="" width="16" height="16" /> Terox Chat · v1.0 · mobile only</p>
         </div>
       </aside>

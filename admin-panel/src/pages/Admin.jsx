@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import Store from "../lib/store.js";
 import useStore from "../lib/useStore.js";
 import UI from "../lib/ui.js";
+import { db, doc, setDoc } from "../lib/firebase.js";
 import { IcoBack, IcoClose, IcoNavHome, IcoNavChat, IcoNavProfile, IcoMenu } from "../components/icons.jsx";
 
 function AdminChrome({ tab, setTab, children }) {
@@ -325,36 +326,76 @@ function Settings() {
   useStore();
   const [qrUrl, setQrUrl] = useState(Store.qr() || "");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const storedQr = Store.qr();
+
+  useEffect(function () {
+    if (!editing) setQrUrl(storedQr);
+  }, [storedQr, editing]);
+
+  async function publish(value) {
+    if (new Blob([value]).size > 750000) {
+      setError("QR image is too large. Choose a smaller image or use a direct image URL.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setSaved(false);
+    try {
+      // Wait for Firestore acknowledgement before reporting success.
+      await setDoc(doc(db, "data", "terox.qr.v1"), { value: value });
+      Store.saveQr(value);
+      setQrUrl(value);
+      setEditing(false);
+      setSaved(true);
+      UI.toast(value ? "QR saved to Firestore" : "QR removed", "ok");
+    } catch (e) {
+      setError("QR save failed: " + (e.message || "Check Firebase configuration and rules."));
+      UI.toast("QR could not be saved", "err");
+    } finally { setSaving(false); }
+  }
 
   function onFile(e) {
-    var f = e.target.files[0];
-    if (!f) return;
-    if (f.size > 5 * 1024 * 1024) { UI.toast("Image too large — max 5MB", "err"); return; }
-    var reader = new FileReader();
-    reader.onload = function () {
-      setQrUrl(reader.result);
-      Store.saveQr(reader.result);
-      setSaved(true);
-      window.setTimeout(function () { setSaved(false); }, 2000);
-      UI.toast("QR updated from image", "ok");
-    };
-    reader.readAsDataURL(f);
+    const file = e.target.files[0];
     e.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError("Image too large — maximum 5MB."); return; }
+    setError("");
+    const reader = new FileReader();
+    reader.onerror = function () { setError("Could not read the image."); };
+    reader.onload = function () {
+      const img = new Image();
+      img.onerror = function () { setError("Could not open this image. Use a PNG or JPG."); };
+      img.onload = function () {
+        const scale = Math.min(1, 1000 / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const value = canvas.toDataURL("image/png");
+        setEditing(true);
+        setQrUrl(value);
+        publish(value);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   }
 
   function save() {
-    if (!qrUrl.trim()) { UI.toast("Paste a QR URL first", "err"); return; }
-    Store.saveQr(qrUrl.trim());
-    setSaved(true);
-    window.setTimeout(function () { setSaved(false); }, 2000);
-    UI.toast("QR code updated", "ok");
+    const value = qrUrl.trim();
+    if (!/^https?:\/\//i.test(value) && !/^data:image\/(png|jpeg|webp);base64,/i.test(value)) {
+      setError("Enter a direct https image URL or upload a QR image.");
+      return;
+    }
+    publish(value);
   }
-
-  function reset() {
-    Store.saveQr("");
-    setQrUrl("");
-    UI.toast("QR reset to default", "info");
-  }
+  function reset() { publish(""); }
 
   var preview = qrUrl.trim()
     ? qrUrl.startsWith("http") || qrUrl.startsWith("data:")
@@ -366,13 +407,13 @@ function Settings() {
     <div className="settings-page">
       <div className="settings-section card">
         <h3 className="settings-title">Payment QR Code</h3>
-        <p className="settings-desc">Update the QR code shown in the user panel's payment dialog. Paste a URL or upload an image (JPG, PNG, max 5MB).</p>
+        <p className="settings-desc">Update the QR code shown in the user panel's payment page. Paste a direct image URL or upload a QR image (JPG, PNG, max 5MB).</p>
 
         <div className="qr-preview-wrap">
           <div className="qr-preview-box">
             {preview
               ? <img src={preview} alt="QR preview" className="qr-preview-img" />
-              : <span className="qr-preview-placeholder">No QR set — default placeholder will show</span>}
+              : <span className="qr-preview-placeholder">No QR set — users will see an unavailable message</span>}
           </div>
         </div>
 
@@ -384,18 +425,20 @@ function Settings() {
             className="settings-input"
             placeholder="https://example.com/qr.png"
             value={qrUrl}
-            onChange={function (e) { setQrUrl(e.target.value); }}
+            onChange={function (e) { setEditing(true); setSaved(false); setQrUrl(e.target.value); }}
           />
         </div>
 
         <div className="settings-field">
           <label className="qr-upload-label" htmlFor="qrFileInput">Or upload image</label>
-          <input id="qrFileInput" type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} hidden />
+          <input id="qrFileInput" type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} disabled={saving} hidden />
         </div>
 
+        {error && <p role="alert" style={{ color: "var(--no)", marginTop: 12 }}>{error}</p>}
+        {saving && <p role="status" style={{ marginTop: 12 }}>Saving to Firestore… Check your connection if this takes too long.</p>}
         <div className="settings-actions">
-          <button className="btn yes" onClick={save}>{saved ? "Saved ✓" : "Save QR"}</button>
-          <button className="btn ghost" onClick={reset}>Reset to Default</button>
+          <button className="btn yes" onClick={save} disabled={saving}>{saving ? "Saving…" : saved ? "Saved ✓" : "Save QR"}</button>
+          <button className="btn ghost" onClick={reset} disabled={saving}>Remove QR</button>
         </div>
       </div>
 

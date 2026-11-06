@@ -10,11 +10,11 @@ export default function useStore() {
   useEffect(function () {
     window.addEventListener("terox:change", bump);
     document.addEventListener("terox:accounts", bump);
-    document.addEventListener("terox:theme", bump);
+    window.addEventListener("terox:theme", bump);
     return function () {
       window.removeEventListener("terox:change", bump);
       document.removeEventListener("terox:accounts", bump);
-      document.removeEventListener("terox:theme", bump);
+      window.removeEventListener("terox:theme", bump);
     };
   }, []);
   return bump;

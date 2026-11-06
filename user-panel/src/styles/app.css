@@ -636,3 +636,22 @@
 .verify-icon { font-size: 2.5rem; text-align: center; margin: 8px 0; }
 .verify-ok { color: var(--yes); }
 .verify-bad { color: var(--no); }
+
+/* Clean, readable payment page in both themes */
+.pay-page { gap: 16px; padding: 20px 16px 32px; }
+.pay-page .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow-sm); }
+.pay-summary-head { margin-bottom: 16px; }
+.pay-summary-head .muted { color: var(--muted); margin-top: 2px; }
+.pay-summary-amount { align-items: center; }
+.pay-to { color: var(--muted); }
+.pay-amt { color: var(--text); font-size: 1.5rem; }
+.pay-section-title { font-size: 1rem; color: var(--text); }
+.pay-section-subtitle { color: var(--muted); font-size: .8rem; margin: 4px 0 16px; }
+.pay-qr-large { width: min(220px, 100%); height: auto; aspect-ratio: 1; background: #fff; padding: 10px; border: 1px solid var(--border); border-radius: 12px; }
+.pay-qr-large img { width: 100%; height: 100%; object-fit: contain; }
+.pay-qr-unavailable { color: #50545d; font-size: .85rem; padding: 12px; }
+.pay-timer-bar { justify-content: center; border-radius: 10px; }
+.pay-form .pay-utr { padding: 0; }
+.pay-form .pay-utr input { background: var(--bg); color: var(--text); font-size: 16px; text-align: left; }
+.pay-actions { gap: 10px; }
+.pay-actions .btn { min-height: 48px; }
