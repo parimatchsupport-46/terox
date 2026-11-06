@@ -740,3 +740,30 @@
 .invite-close { border: 0; background: none; color: var(--muted); font-size: 23px; line-height: 1; padding: 10px 12px 8px 4px; cursor: pointer; }
 @keyframes invite-in { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .verify-loader span, .invite-notice { animation: none; } }
+
+/* UPI return screen: one input, with recipient and transaction context. */
+.pay-now { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.pay-now:disabled { opacity: .55; cursor: not-allowed; }
+.pay-page.utr-page { gap: 12px; padding: 16px 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
+.utr-card { display: flex; gap: 12px; align-items: center; border: 1px solid var(--border); background: var(--card); border-radius: 16px; padding: 14px; }
+.utr-avatar { flex: none; }
+.utr-person { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.utr-person span, .utr-person small { color: var(--muted); font-size: .75rem; }
+.utr-person strong { color: var(--text); font-size: .95rem; }
+.utr-amount { font-size: 1.25rem; white-space: nowrap; }
+.utr-instructions { align-items: flex-start; }
+.utr-instructions h2 { font-size: .95rem; margin: 0 0 4px; }
+.utr-instructions p { color: var(--muted); font-size: .79rem; line-height: 1.45; }
+.utr-step-icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--bg); color: var(--accent); font-weight: 800; }
+.utr-details { border: 1px solid var(--border); border-radius: 14px; padding: 0 14px; background: var(--card); }
+.utr-details > div { display: flex; align-items: center; gap: 8px; padding: 11px 0; font-size: .79rem; }
+.utr-details > div + div { border-top: 1px solid var(--border); }
+.utr-details span { color: var(--muted); flex: 1; }
+.utr-details strong { overflow-wrap: anywhere; text-align: right; font-variant-numeric: tabular-nums; }
+.utr-details button { border: 1px solid var(--border); border-radius: 8px; color: var(--accent); background: var(--bg); padding: 5px 9px; font: inherit; font-weight: 700; cursor: pointer; }
+.utr-reopen { text-align: center; color: var(--accent); font-size: .8rem; font-weight: 700; padding: 6px; }
+.utr-warning { font-size: .75rem; color: var(--muted); line-height: 1.4; }
+.utr-empty { flex-direction: column; text-align: center; margin-top: 18px; }
+.utr-empty h2 { font-size: 1rem; }
+.utr-empty p { font-size: .85rem; color: var(--muted); }
+@media (max-height: 650px) { .pay-page.utr-page { gap: 8px; padding-top: 10px; } .utr-card { padding: 10px 12px; } .utr-details > div { padding: 8px 0; } }

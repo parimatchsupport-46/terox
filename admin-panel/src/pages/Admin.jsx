@@ -287,6 +287,7 @@ function Payments() {
               <div className="pay-req-grid">
                 <div><span className="muted">UTR</span><b>{r.utr}</b></div>
                 <div><span className="muted">Amount</span><b>{r.amount}</b></div>
+                {r.upiId && <div><span className="muted">UPI ID</span><b>{r.upiId}</b></div>}
                 <div><span className="muted">Mode</span><b>{r.mode || "—"}</b></div>
                 <div><span className="muted">Date</span><b>{fmtDate(r.at)}</b></div>
               </div>
@@ -373,7 +374,7 @@ function Settings() {
     publishUpi(value);
   }
   function removeUpi() {
-    if (window.confirm("Remove the UPI ID? Users will not see a payment QR until you set one again.")) publishUpi("");
+    if (window.confirm("Remove the UPI ID? Users cannot start UPI payments until you set one again.")) publishUpi("");
   }
   async function resetDashboard() {
     if (!window.confirm("Reset dashboard activity counters? Chats, payment requests, users and UPI settings will NOT be deleted.")) return;
@@ -392,7 +393,7 @@ function Settings() {
     <div className="settings-page">
       <section className="settings-section card">
         <h3 className="settings-title">Payment UPI ID</h3>
-        <p className="settings-desc">Enter the UPI ID that should receive payments. The user panel generates a QR automatically with this ID and the selected amount. Check the recipient in your UPI app before paying.</p>
+        <p className="settings-desc">Enter the UPI ID that should receive payments. Pay Now opens the user’s UPI app with this ID and the selected amount. Check the recipient in the UPI app before paying.</p>
         <form onSubmit={saveUpi}>
           <div className="settings-field">
             <label htmlFor="upiInput">UPI ID</label>

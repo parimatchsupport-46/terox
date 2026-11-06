@@ -1,4 +1,4 @@
-/* UPI QR is generated locally; no payment data is sent to a QR service. */
+/* Construct the UPI intent locally; no payment data is sent to a QR service. */
 export function validUpi(value) {
   return typeof value === "string" && /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,255}@[a-zA-Z0-9][a-zA-Z0-9.-]{0,63}$/.test(value.trim());
 }

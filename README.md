@@ -70,13 +70,13 @@ Both panels use the same Firestore collection (`data`) for:
 - `terox.profile.v1` — user profile
 - `terox.prefs.v1` — preferences
 - `terox.payreq.v1` — payment requests
-- `terox.upi.v1` — admin-set UPI ID used to generate payment QR codes locally
+- `terox.upi.v1` — admin-set UPI ID used to open the UPI app
 - `terox.dashboard.reset.v1` — server timestamp marking the dashboard reporting period
 
 The `firestore-sync.js` module bridges localStorage ↔ Firestore automatically.
 
 ## Payment and dashboard settings
 
-Save the receiver UPI ID in Admin Settings. The user payment page generates a UPI QR locally using that ID and the selected amount, only after receiving the server-confirmed ID. The UPI ID is not verified by the application; verify the recipient in the UPI app. Dashboard reset starts a new reporting period; it does not delete chats, payments, users, or payment settings. Total user counts remain current.
+Save the receiver UPI ID in Admin Settings. Pay Now opens the UPI app with the selected amount and the server-confirmed recipient, then the browser shows a UTR entry page. The UPI ID is not verified by the application; verify the recipient in the UPI app. Dashboard reset starts a new reporting period; it does not delete chats, payments, users, or payment settings. Total user counts remain current.
 
 **Security:** The example Firestore rules currently allow public writes. Do not use the payment feature in production until Firebase Authentication and admin-only write rules are in place; otherwise anyone can change the payment recipient.

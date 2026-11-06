@@ -13,6 +13,9 @@ import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
 import Chrome from "../components/Chrome.jsx";
 import { IcoBack, IcoCopy, IcoTrash } from "../components/icons.jsx";
+import useUpiRecipient from "../lib/useUpiRecipient.js";
+import { upiPaymentUri } from "../lib/upi.js";
+import { makePaymentSession, savePaymentSession } from "../lib/paymentSession.js";
 
 function snippet(s) {
   const one = String(s).replace(/\s+/g, " ").trim();
@@ -36,6 +39,7 @@ export default function Chat() {
 
   const typing = Store.typingOn() && Store.typingName() === user.name;
   const navigate = useNavigate();
+  const recipient = useUpiRecipient();
   const [sheetId, setSheetId] = useState(null);
   const [sheetOn, setSheetOn] = useState(false);
   const [sheetScrim, setSheetScrim] = useState(false);
@@ -141,8 +145,15 @@ export default function Chat() {
     }
   }
 
-  /* Payment opens on its own page. */
-  function openPay() { navigate("/pay?uid=" + encodeURIComponent(uid)); }
+  /* Save the exact recipient and plan before the UPI app is opened. */
+  function openPay(e, pick) {
+    e.stopPropagation();
+    const session = makePaymentSession(uid, recipient.upi, pick);
+    if (!session) { e.preventDefault(); UI.toast("Payment details are unavailable", "bad"); return; }
+    savePaymentSession(session);
+    // Keep the UTR page in browser history before the native UPI link opens.
+    navigate("/pay?uid=" + encodeURIComponent(uid), { state: { payment: session } });
+  }
   function closeVerify() { setVerifyOpen(false); setVerifyStatus("verifying"); setVerifyReqId(null); }
 
   /* Apply each accepted payment once, including when the chat is reopened. */
@@ -232,8 +243,14 @@ export default function Chat() {
             return <div key={pair[0]}><span>{pair[0]}</span><b>{pair[1]}</b></div>;
           })}
         </div>
-        <button className="pay-now" type="button" onClick={function (e) { e.stopPropagation(); openPay(m); }}>{"Pay now " + (p.amount || "")}</button>
-        <p className="opts-n">Scan the QR to pay. Fill the UTR number and tap Payment Complete.</p>
+        {recipient.status === "ready" && upiPaymentUri(recipient.upi, p.amount) ? (
+          <a className="pay-now" href={upiPaymentUri(recipient.upi, p.amount)} onClick={function (e) { openPay(e, p); }}>{"Pay now " + (p.amount || "")}</a>
+        ) : (
+          <button className="pay-now" type="button" disabled>{recipient.status === "loading" ? "Loading payment details…" : "Payment unavailable"}</button>
+        )}
+        <p className="opts-n">Pay in your UPI app, then return here to enter your UTR number.</p>
+        {recipient.status === "offline" && <p className="opts-n">Connect to the internet to load payment details.</p>}
+        {(recipient.status === "missing" || recipient.status === "error") && <p className="opts-n">Payment details unavailable. Please contact support.</p>}
       </div>
     );
   }

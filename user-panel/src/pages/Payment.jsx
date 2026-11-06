@@ -1,160 +1,122 @@
-/* ==========================================================================
-   Payment.jsx — standalone payment page (replaces the old popup dialog).
-   Shows QR code, timer, payment details and UTR input.
-   Triggered when user taps "Pay now" in chat.
-   ========================================================================== */
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+/* UTR page shown when a user returns from their UPI app. */
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Chrome from "../components/Chrome.jsx";
 import Store from "../lib/store.js";
 import useStore from "../lib/useStore.js";
 import UI from "../lib/ui.js";
 import { IcoBack } from "../components/icons.jsx";
-import { QRCodeSVG } from "qrcode.react";
-import { db, doc, onSnapshot } from "../lib/firebase.js";
 import { upiPaymentUri } from "../lib/upi.js";
+import useUpiRecipient from "../lib/useUpiRecipient.js";
+import { readPaymentSession, validPaymentSession, clearPaymentSession } from "../lib/paymentSession.js";
 
 export default function Payment() {
   useStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
   const uid = params.get("uid") || "";
   const user = Store.user(uid);
-
+  const recipient = useUpiRecipient();
+  const [session] = useState(function () {
+    const fromNavigation = location.state && location.state.payment;
+    return validPaymentSession(fromNavigation, uid) ? fromNavigation : readPaymentSession(uid);
+  });
   const [payUtr, setPayUtr] = useState("");
-  const [upi, setUpi] = useState("");
-  const [upiStatus, setUpiStatus] = useState("loading");
-  useEffect(function () {
-    // Require a server-confirmed recipient instead of showing a stale cached QR.
-    return onSnapshot(doc(db, "data", "terox.upi.v1"), { includeMetadataChanges: true }, function (snap) {
-      if (snap.metadata.hasPendingWrites) return;
-      if (snap.metadata.fromCache) { setUpi(""); setUpiStatus("offline"); return; }
-      const value = snap.exists() && typeof snap.data().value === "string" ? snap.data().value : "";
-      setUpi(value);
-      setUpiStatus(value ? "ready" : "missing");
-    }, function () { setUpi(""); setUpiStatus("error"); });
-  }, []);
-  const [paySecs, setPaySecs] = useState(900);
   const [done, setDone] = useState(false);
-  const timerRef = useRef(null);
-
-  // derive payment details from store
-  const picks = Store.picksOf(Store.thread(uid).messages);
-  const amount = picks.amount || "";
-  const service = picks.mode || picks.svc || "";
-  const plan = picks.d || "";
-  const mode = picks.mode || "";
-  const paymentUri = upiStatus === "ready" ? upiPaymentUri(upi, amount) : "";
+  const [paySecs, setPaySecs] = useState(function () {
+    return session ? Math.max(0, Math.ceil((session.expiresAt - Date.now()) / 1000)) : 0;
+  });
 
   function mmss(s) {
-    var m = Math.floor(s / 60);
-    var r = s % 60;
+    const m = Math.floor(s / 60), r = s % 60;
     return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r;
   }
-
-  // timer countdown
   useEffect(function () {
-    if (done) return undefined;
-    timerRef.current = setInterval(function () {
-      setPaySecs(function (s) {
-        if (s <= 1) {
-          clearInterval(timerRef.current);
-          UI.toast("Payment time expire ho gya", "bad");
-          navigate("/chat?u=" + encodeURIComponent(uid));
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return function () { clearInterval(timerRef.current); };
-  }, [done, navigate, uid]);
+    if (!session || done) return undefined;
+    function tick() {
+      const remaining = Math.max(0, Math.ceil((session.expiresAt - Date.now()) / 1000));
+      setPaySecs(remaining);
+      if (!remaining) {
+        clearPaymentSession(uid);
+        UI.toast("Payment time expired", "bad");
+        navigate("/chat?u=" + encodeURIComponent(uid), { replace: true });
+      }
+    }
+    const timer = window.setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("pageshow", tick);
+    tick();
+    return function () { window.clearInterval(timer); document.removeEventListener("visibilitychange", tick); window.removeEventListener("pageshow", tick); };
+  }, [session, done, uid, navigate]);
 
-  function closePay() {
-    navigate("/chat?u=" + encodeURIComponent(uid));
-  }
-
+  function closePay() { navigate("/chat?u=" + encodeURIComponent(uid)); }
   function completePay() {
-    if (!payUtr || !payUtr.trim()) { UI.toast("UTR number fill kijiye", "bad"); return; }
-    var req = {
-      id: "pr" + Date.now().toString(36),
-      uid: uid,
-      utr: payUtr.trim(),
-      amount: amount,
-      service: service,
-      plan: plan,
-      mode: mode,
-      status: "pending",
-      at: Date.now()
-    };
-    Store.addPayReq(req);
+    if (!session || !validPaymentSession(session, uid)) { UI.toast("Payment session expired. Please start again.", "bad"); return; }
+    if (!payUtr.trim()) { UI.toast("UTR number fill kijiye", "bad"); return; }
+    Store.addPayReq({
+      id: "pr" + Date.now().toString(36), uid, utr: payUtr.trim(),
+      amount: session.amount, service: session.service, plan: session.plan,
+      mode: session.mode, upiId: session.upi, status: "pending", at: Date.now()
+    });
     setDone(true);
-    window.setTimeout(function () {
-      navigate("/chat?u=" + encodeURIComponent(uid));
-    }, 800);
+    clearPaymentSession(uid);
+    window.setTimeout(function () { navigate("/chat?u=" + encodeURIComponent(uid), { replace: true }); }, 800);
   }
-
   async function copyUpi() {
     let copied = false;
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(upi);
-        copied = true;
-      }
-    } catch (e) { /* Try the fallback below. */ }
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(session.upi); copied = true; } } catch (e) {}
     if (!copied) {
       const field = document.createElement("textarea");
-      field.value = upi;
-      field.setAttribute("readonly", "");
-      field.style.position = "fixed";
-      field.style.opacity = "0";
-      document.body.appendChild(field);
-      field.select();
+      field.value = session.upi; field.setAttribute("readonly", ""); field.style.position = "fixed"; field.style.opacity = "0";
+      document.body.appendChild(field); field.select();
       try { copied = document.execCommand("copy"); } catch (e) { copied = false; }
       field.remove();
     }
     UI.toast(copied ? "UPI ID copied" : "Could not copy UPI ID. Please copy it manually.", copied ? "ok" : "bad");
   }
-
   function payLater() {
     UI.toast("Payment ke bina service provide nahi ki jayegi", "bad");
     navigate("/chat?u=" + encodeURIComponent(uid));
   }
 
+  const canReopen = session && recipient.status === "ready" && recipient.upi === session.upi && validPaymentSession(session, uid);
   return (
-    <Chrome
-      full
-      bodyStyle={{ display: "flex", flexDirection: "column", minHeight: 0 }}
-      bar={<>
-        <button className="icon-btn" type="button" aria-label="Back to chat" onClick={closePay}><IcoBack /></button>
-        <b className="pay-page-title">Payment</b>
-        <div style={{ flex: 1 }}></div>
-      </>}
-    >
-      <div className="pay-page compact-pay">
-        <div className="compact-pay-summary">
-          <div><span className="compact-pay-label">Amount to pay</span><strong className="pay-amt">{amount || "—"}</strong></div>
-          <span className="compact-pay-service">{service || "Service"} · {plan || "—"}</span>
-        </div>
-        <div className="compact-pay-panel">
-          <h2 className="pay-section-title">Scan & pay</h2>
-          <div className="pay-qr-large" id="payQrLarge">
-            {paymentUri ? <QRCodeSVG value={paymentUri} size={200} level="M" marginSize={4} title="UPI payment QR code" /> : (
-              <span className="pay-qr-unavailable" role="status">
-                {upiStatus === "loading" ? "Loading payment details…" : upiStatus === "offline" ? "Connect to the internet to load payment details." : upiStatus === "error" ? "Could not load payment details. Please try again." : !upi ? "UPI ID not set. Please contact support." : "Payment details unavailable. Please return to chat and select a plan."}
-              </span>
-            )}
+    <Chrome full bodyStyle={{ display: "flex", flexDirection: "column", minHeight: 0 }} bar={<>
+      <button className="icon-btn" type="button" aria-label="Back to chat" onClick={closePay}><IcoBack /></button>
+      <b className="pay-page-title">Payment details</b><div style={{ flex: 1 }}></div>
+    </>}>
+      <div className="pay-page utr-page">
+        {!session ? (
+          <div className="utr-card utr-empty" role="status">
+            <h2>No active payment</h2><p>Return to the chat and tap Pay now to open your UPI app.</p>
+            <button className="btn" type="button" onClick={closePay}>Back to chat</button>
           </div>
-          {paymentUri && <div className="compact-upi"><span>UPI ID <b>{upi}</b></span><button type="button" onClick={copyUpi} aria-label="Copy UPI ID">Copy</button></div>}
-          <div className="compact-timer"><span>Payment valid for</span><strong id="payTimer">{mmss(paySecs)}</strong></div>
-        </div>
-        <div className="compact-pay-input">
-          <label htmlFor="payUtrInput">UTR number</label>
-          <input id="payUtrInput" type="text" value={payUtr} onChange={function (e) { setPayUtr(e.target.value); }} placeholder="Enter UTR number" autoComplete="off" disabled={done} />
-        </div>
-        <div className="pay-actions">
-          <button className="btn ghost sm" type="button" id="payLater" onClick={payLater} disabled={done}>Pay later</button>
-          <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim() || done || !paymentUri}>{done ? "Submitted ✓" : "Payment Complete"}</button>
-        </div>
+        ) : (<>
+          <div className="utr-card utr-recipient">
+            <span className="utr-avatar" dangerouslySetInnerHTML={{ __html: UI.avatarHTML(user, 48, true) }} />
+            <div className="utr-person"><span>Payment for</span><strong>{user.name}</strong><small>{session.service || "Service"} · {session.plan || "—"}</small></div>
+            <strong className="utr-amount">{session.amount}</strong>
+          </div>
+          <div className="utr-card utr-instructions">
+            <div className="utr-step-icon" aria-hidden="true">#</div>
+            <div><h2>Enter your UTR number</h2><p>After paying in your UPI app, enter the UTR or transaction reference from your receipt.</p></div>
+          </div>
+          <div className="utr-details">
+            <div><span>UPI ID</span><strong>{session.upi}</strong><button type="button" onClick={copyUpi} aria-label="Copy UPI ID">Copy</button></div>
+            <div><span>Time remaining</span><strong id="payTimer">{mmss(paySecs)}</strong></div>
+          </div>
+          <div className="compact-pay-input">
+            <label htmlFor="payUtrInput">UTR number</label>
+            <input id="payUtrInput" type="text" value={payUtr} onChange={function (e) { setPayUtr(e.target.value); }} placeholder="Enter UTR number" autoComplete="off" disabled={done} />
+          </div>
+          <div className="pay-actions">
+            <button className="btn ghost sm" type="button" id="payLater" onClick={payLater} disabled={done}>Pay later</button>
+            <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim() || done || !paySecs}>{done ? "Submitted ✓" : "Payment Complete"}</button>
+          </div>
+          {canReopen && !done && <a className="utr-reopen" href={upiPaymentUri(session.upi, session.amount)}>Open UPI app again</a>}
+          {recipient.status === "ready" && recipient.upi !== session.upi && <p className="utr-warning">Payment details have changed. Submit only the UTR for your original payment above; to pay again, return to chat.</p>}
+        </>)}
       </div>
     </Chrome>
   );
