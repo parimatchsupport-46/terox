@@ -8,7 +8,9 @@ import { Link } from "react-router-dom";
 import Store from "../lib/store.js";
 import useStore from "../lib/useStore.js";
 import UI from "../lib/ui.js";
-import { db, doc, setDoc } from "../lib/firebase.js";
+import { db, doc, setDoc, onSnapshot, serverTimestamp } from "../lib/firebase.js";
+import { validUpi } from "../lib/upi.js";
+import { dashboardCounts } from "../lib/dashboard.js";
 import { IcoBack, IcoClose, IcoNavHome, IcoNavChat, IcoNavProfile, IcoMenu } from "../components/icons.jsx";
 
 function AdminChrome({ tab, setTab, children }) {
@@ -114,17 +116,24 @@ function AdminChrome({ tab, setTab, children }) {
 
 /* ---------------- Dashboard ---------------- */
 function Dashboard() {
-  const users = Store.users();
-  const stats = users.map(function (u) { return { u: u, s: Store.userStats(u.id) }; });
+  useStore();
+  const [resetAt, setResetAt] = useState(0);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(function () {
+    return onSnapshot(doc(db, "data", "terox.dashboard.reset.v1"), { includeMetadataChanges: true }, function (snap) {
+      if (snap.metadata.hasPendingWrites) return;
+      if (snap.metadata.fromCache) { setReady(false); setError("Connect to the internet to load dashboard statistics."); return; }
+      const stamp = snap.exists() ? snap.data().resetAt : null;
+      setResetAt(stamp && typeof stamp.toMillis === "function" ? stamp.toMillis() : 0);
+      setReady(true);
+      setError("");
+    }, function () { setReady(false); setError("Could not load dashboard statistics."); });
+  }, []);
+  const counts = dashboardCounts(Store.users(), Store.chats(), Store.payReqs(), resetAt);
+  const { total, chatted, noChat, paid, noPay, pending, utrSubmitted } = counts;
 
-  const total = users.length;
-  const chatted = stats.filter(function (x) { return x.s.chatted; }).length;
-  const noChat = total - chatted;
-  const paid = stats.filter(function (x) { return x.s.paid; }).length;
-  const noPay = total - paid;
-  const pending = Store.pendingPayReqs().length;
-  const utrSubmitted = stats.filter(function (x) { return x.s.utr; }).length;
-
+  if (!ready) return <p className="settings-desc" role="status">{error || "Loading dashboard…"}</p>;
   const cards = [
     { label: "Total Users", value: total, icon: "👥", color: "accent" },
     { label: "Chatted", value: chatted, icon: "💬", color: "yes" },
@@ -137,7 +146,9 @@ function Dashboard() {
   ];
 
   return (
-    <div className="dash-grid">
+    <div>
+      <p className="dash-period">{resetAt ? "Activity since the last dashboard reset. User totals remain current." : "All recorded activity. User totals are current."}</p>
+      <div className="dash-grid">
       {cards.map(function (c) {
         return (
           <div className={"dash-card t-" + c.color} key={c.label}>
@@ -147,6 +158,7 @@ function Dashboard() {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -323,129 +335,86 @@ function Payments() {
 
 /* ---------------- Settings ---------------- */
 function Settings() {
-  useStore();
-  const [qrUrl, setQrUrl] = useState(Store.qr() || "");
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [upi, setUpi] = useState("");
+  const [remoteUpi, setRemoteUpi] = useState("");
   const [editing, setEditing] = useState(false);
-  const storedQr = Store.qr();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
 
   useEffect(function () {
-    if (!editing) setQrUrl(storedQr);
-  }, [storedQr, editing]);
+    return onSnapshot(doc(db, "data", "terox.upi.v1"), { includeMetadataChanges: true }, function (snap) {
+      if (snap.metadata.hasPendingWrites) return;
+      if (snap.metadata.fromCache) { setLoading(true); setError("Connect to the internet to load payment settings."); return; }
+      setRemoteUpi(snap.exists() && typeof snap.data().value === "string" ? snap.data().value : "");
+      setLoading(false);
+      setError("");
+    }, function (e) { setLoading(true); setError("Unable to load UPI settings: " + e.message); });
+  }, []);
+  useEffect(function () { if (!editing) setUpi(remoteUpi); }, [remoteUpi, editing]);
 
-  async function publish(value) {
-    if (new Blob([value]).size > 750000) {
-      setError("QR image is too large. Choose a smaller image or use a direct image URL.");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    setSaved(false);
+  async function publishUpi(value) {
+    setSaving(true); setError(""); setSaved(false);
     try {
-      // Wait for Firestore acknowledgement before reporting success.
-      await setDoc(doc(db, "data", "terox.qr.v1"), { value: value });
-      Store.saveQr(value);
-      setQrUrl(value);
-      setEditing(false);
-      setSaved(true);
-      UI.toast(value ? "QR saved to Firestore" : "QR removed", "ok");
+      await setDoc(doc(db, "data", "terox.upi.v1"), { value: value });
+      setRemoteUpi(value); setUpi(value); setEditing(false); setSaved(true);
+      UI.toast(value ? "UPI ID saved" : "UPI ID removed", "ok");
     } catch (e) {
-      setError("QR save failed: " + (e.message || "Check Firebase configuration and rules."));
-      UI.toast("QR could not be saved", "err");
+      setError("UPI save failed: " + (e.message || "Check Firebase and your connection."));
     } finally { setSaving(false); }
   }
-
-  function onFile(e) {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { setError("Image too large — maximum 5MB."); return; }
-    setError("");
-    const reader = new FileReader();
-    reader.onerror = function () { setError("Could not read the image."); };
-    reader.onload = function () {
-      const img = new Image();
-      img.onerror = function () { setError("Could not open this image. Use a PNG or JPG."); };
-      img.onload = function () {
-        const scale = Math.min(1, 1000 / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const value = canvas.toDataURL("image/png");
-        setEditing(true);
-        setQrUrl(value);
-        publish(value);
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
+  function saveUpi(e) {
+    e.preventDefault();
+    const value = upi.trim();
+    if (!validUpi(value)) { setError("Enter a valid UPI ID, for example name@bank."); return; }
+    publishUpi(value);
   }
-
-  function save() {
-    const value = qrUrl.trim();
-    if (!/^https?:\/\//i.test(value) && !/^data:image\/(png|jpeg|webp);base64,/i.test(value)) {
-      setError("Enter a direct https image URL or upload a QR image.");
-      return;
-    }
-    publish(value);
+  function removeUpi() {
+    if (window.confirm("Remove the UPI ID? Users will not see a payment QR until you set one again.")) publishUpi("");
   }
-  function reset() { publish(""); }
-
-  var preview = qrUrl.trim()
-    ? qrUrl.startsWith("http") || qrUrl.startsWith("data:")
-      ? qrUrl
-      : null
-    : null;
+  async function resetDashboard() {
+    if (!window.confirm("Reset dashboard activity counters? Chats, payment requests, users and UPI settings will NOT be deleted.")) return;
+    setResetting(true); setResetMessage("");
+    try {
+      // Use server time so all admin devices share the same reporting period.
+      await setDoc(doc(db, "data", "terox.dashboard.reset.v1"), { resetAt: serverTimestamp() });
+      setResetMessage("Dashboard activity reset. User totals remain current; no chats or payments were deleted.");
+      UI.toast("Dashboard reset", "ok");
+    } catch (e) {
+      setResetMessage("Dashboard reset failed: " + (e.message || "Check Firebase and your connection."));
+    } finally { setResetting(false); }
+  }
 
   return (
     <div className="settings-page">
-      <div className="settings-section card">
-        <h3 className="settings-title">Payment QR Code</h3>
-        <p className="settings-desc">Update the QR code shown in the user panel's payment page. Paste a direct image URL or upload a QR image (JPG, PNG, max 5MB).</p>
-
-        <div className="qr-preview-wrap">
-          <div className="qr-preview-box">
-            {preview
-              ? <img src={preview} alt="QR preview" className="qr-preview-img" />
-              : <span className="qr-preview-placeholder">No QR set — users will see an unavailable message</span>}
+      <section className="settings-section card">
+        <h3 className="settings-title">Payment UPI ID</h3>
+        <p className="settings-desc">Enter the UPI ID that should receive payments. The user panel generates a QR automatically with this ID and the selected amount. Check the recipient in your UPI app before paying.</p>
+        <form onSubmit={saveUpi}>
+          <div className="settings-field">
+            <label htmlFor="upiInput">UPI ID</label>
+            <input id="upiInput" type="text" className="settings-input" placeholder="name@bank" value={upi} autoComplete="off" spellCheck={false} disabled={loading || saving}
+              onChange={function (e) { setEditing(true); setSaved(false); setError(""); setUpi(e.target.value); }} />
           </div>
-        </div>
-
-        <div className="settings-field">
-          <label htmlFor="qrUrlInput">QR Image URL</label>
-          <input
-            id="qrUrlInput"
-            type="url"
-            className="settings-input"
-            placeholder="https://example.com/qr.png"
-            value={qrUrl}
-            onChange={function (e) { setEditing(true); setSaved(false); setQrUrl(e.target.value); }}
-          />
-        </div>
-
-        <div className="settings-field">
-          <label className="qr-upload-label" htmlFor="qrFileInput">Or upload image</label>
-          <input id="qrFileInput" type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} disabled={saving} hidden />
-        </div>
-
-        {error && <p role="alert" style={{ color: "var(--no)", marginTop: 12 }}>{error}</p>}
-        {saving && <p role="status" style={{ marginTop: 12 }}>Saving to Firestore… Check your connection if this takes too long.</p>}
-        <div className="settings-actions">
-          <button className="btn yes" onClick={save} disabled={saving}>{saving ? "Saving…" : saved ? "Saved ✓" : "Save QR"}</button>
-          <button className="btn ghost" onClick={reset} disabled={saving}>Remove QR</button>
-        </div>
-      </div>
-
-      <div className="settings-section card">
-        <h3 className="settings-title">About</h3>
-        <p className="settings-desc">Terox Admin Panel · v1.0. This panel manages users, payment verification, and QR code settings. Data syncs to Firestore so both panels stay in sync.</p>
-      </div>
+          {error && <p role="alert" className="settings-error">{error}</p>}
+          {loading && !error && <p role="status" className="settings-desc">Loading UPI settings…</p>}
+          {saving && <p role="status" className="settings-desc">Saving to Firestore… Check your connection if this takes too long.</p>}
+          <div className="settings-actions">
+            <button className="btn yes" type="submit" disabled={loading || saving}>{saving ? "Saving…" : saved ? "Saved ✓" : "Save UPI ID"}</button>
+            <button className="btn ghost" type="button" onClick={removeUpi} disabled={loading || saving || !remoteUpi}>Remove UPI ID</button>
+          </div>
+        </form>
+      </section>
+      <section className="settings-section card">
+        <h3 className="settings-title">Reset dashboard activity</h3>
+        <p className="settings-desc">Start dashboard activity counts again from now. Chats, payment requests, users and UPI settings are not deleted. Total user counts remain current.</p>
+        <button className="btn ghost" type="button" onClick={resetDashboard} disabled={resetting}>{resetting ? "Resetting…" : "Clear dashboard data"}</button>
+        {resetting && <p className="settings-desc" role="status">Waiting for Firestore… Check your connection if this takes too long.</p>}
+        {resetMessage && <p className="settings-result" role="status">{resetMessage}</p>}
+      </section>
     </div>
   );
 }

@@ -96,14 +96,6 @@ export function initSync() {
   // Listen for Firestore changes
   listenToFirestore();
 
-  // QR is admin-owned: never publish a stale local copy from either panel.
-  onSnapshot(doc(db, "data", "terox.qr.v1"), function (snap) {
-    if (snap.metadata.hasPendingWrites) return;
-    const value = snap.exists() && typeof snap.data().value === "string" ? snap.data().value : "";
-    localStorage.setItem("terox.qr.v1", JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent("terox:change", { detail: { remote: true } }));
-  }, function (err) { console.warn("[Terox] QR sync failed:", err.message || err); });
-
   // Listen for localStorage changes → sync to Firestore
   window.addEventListener("terox:change", syncToFirestore);
 }

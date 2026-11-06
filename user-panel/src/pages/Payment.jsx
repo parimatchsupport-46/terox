@@ -10,6 +10,9 @@ import Store from "../lib/store.js";
 import useStore from "../lib/useStore.js";
 import UI from "../lib/ui.js";
 import { IcoBack } from "../components/icons.jsx";
+import { QRCodeSVG } from "qrcode.react";
+import { db, doc, onSnapshot } from "../lib/firebase.js";
+import { upiPaymentUri } from "../lib/upi.js";
 
 export default function Payment() {
   useStore();
@@ -19,10 +22,18 @@ export default function Payment() {
   const user = Store.user(uid);
 
   const [payUtr, setPayUtr] = useState("");
-  const [qrError, setQrError] = useState(false);
-  const qr = Store.qr();
-  const qrAvailable = !!qr && (/^https?:\/\//i.test(qr) || /^data:image\//i.test(qr));
-  useEffect(function () { setQrError(false); }, [qr]);
+  const [upi, setUpi] = useState("");
+  const [upiStatus, setUpiStatus] = useState("loading");
+  useEffect(function () {
+    // Require a server-confirmed recipient instead of showing a stale cached QR.
+    return onSnapshot(doc(db, "data", "terox.upi.v1"), { includeMetadataChanges: true }, function (snap) {
+      if (snap.metadata.hasPendingWrites) return;
+      if (snap.metadata.fromCache) { setUpi(""); setUpiStatus("offline"); return; }
+      const value = snap.exists() && typeof snap.data().value === "string" ? snap.data().value : "";
+      setUpi(value);
+      setUpiStatus(value ? "ready" : "missing");
+    }, function () { setUpi(""); setUpiStatus("error"); });
+  }, []);
   const [paySecs, setPaySecs] = useState(900);
   const [done, setDone] = useState(false);
   const timerRef = useRef(null);
@@ -33,6 +44,7 @@ export default function Payment() {
   const service = picks.mode || picks.svc || "";
   const plan = picks.d || "";
   const mode = picks.mode || "";
+  const paymentUri = upiStatus === "ready" ? upiPaymentUri(upi, amount) : "";
 
   function mmss(s) {
     var m = Math.floor(s / 60);
@@ -86,13 +98,6 @@ export default function Payment() {
     navigate("/chat?u=" + encodeURIComponent(uid));
   }
 
-  // QR rendering
-  function renderQR() {
-    if (qrAvailable && !qrError)
-      return <img src={qr} alt="Payment QR code" className="pay-qr-img" onError={function () { setQrError(true); }} />;
-    return null;
-  }
-
   return (
     <Chrome
       full
@@ -124,9 +129,15 @@ export default function Payment() {
           <h2 className="pay-section-title">Scan to pay</h2>
           <p className="pay-section-subtitle">Open any UPI app and scan the QR code</p>
           <div className="pay-qr-large" id="payQrLarge">
-            {renderQR()}
-            <span className="pay-qr-unavailable" hidden={qrAvailable && !qrError}>QR code unavailable. Please contact support.</span>
+            {paymentUri ? (
+              <QRCodeSVG value={paymentUri} size={200} level="M" marginSize={4} title="UPI payment QR code" />
+            ) : (
+              <span className="pay-qr-unavailable" role="status">
+                {upiStatus === "loading" ? "Loading payment details…" : upiStatus === "offline" ? "Connect to the internet to load payment details." : upiStatus === "error" ? "Could not load payment details. Please try again." : !upi ? "UPI ID not set. Please contact support." : "Payment details unavailable. Please return to chat and select a plan."}
+              </span>
+            )}
           </div>
+          {paymentUri && <p className="pay-upi-id">UPI ID: <b>{upi}</b></p>}
           <div className="pay-timer-bar">
             <span className="pay-timer-ic">⏰</span>
             <span className="pay-timer-txt">Payment valid for</span>
@@ -154,7 +165,7 @@ export default function Payment() {
         {/* actions */}
         <div className="pay-actions">
           <button className="btn ghost sm" type="button" id="payLater" onClick={payLater} disabled={done}>Pay later</button>
-          <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim() || done || !qrAvailable || qrError}>
+          <button className="btn sm" type="button" id="payDone" onClick={completePay} disabled={!payUtr.trim() || done || !paymentUri}>
             {done ? "Submitted ✓" : "Payment Complete"}
           </button>
         </div>

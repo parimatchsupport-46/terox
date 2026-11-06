@@ -804,21 +804,6 @@ const Store = (function () {
   function typingName() { return _typing.name; }
   function cancelAllReplies() { Object.keys(_replies).forEach(cancelReply); }
 
-  /* ---------------- QR code (admin can update, user panel reads) ----------------
-     Stored as a URL string or data URI. Default is the placeholder SVG.
-     The admin Settings page lets you paste a URL or upload an image. */
-  var QR_KEY = "terox.qr.v1";
-  function qr() {
-    var stored = read(QR_KEY, null);
-    return stored || "";
-  }
-  function saveQr(data) {
-    write(QR_KEY, data);
-    emit();
-    return data;
-  }
-
-
   return {
     get USERS() { return users(); },
     chats: chats, thread: thread, order: order, last: last, lastAt: lastAt,
@@ -843,8 +828,7 @@ const Store = (function () {
     RATE: RATE, SECTIONS: SECTIONS, price: price, picksOf: picksOf, money: money,
     NEXT: NEXT, PENDING: PENDING,
     payReqs: payReqs, addPayReq: addPayReq, updatePayReq: updatePayReq, removePayReq: removePayReq,
-    pendingPayReqs: pendingPayReqs, payReqForUser: payReqForUser, userStats: userStats,
-    qr: qr, saveQr: saveQr
+    pendingPayReqs: pendingPayReqs, payReqForUser: payReqForUser, userStats: userStats
   };
 })();
 
