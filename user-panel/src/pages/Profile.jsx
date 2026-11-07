@@ -3,10 +3,8 @@
    preferences and the local-data controls. Same markup, same ids, same
    read-only-until-Edit behaviour; the values simply come from Store now.
    ========================================================================== */
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
 import Store from "../lib/store.js";
-import Auth from "../lib/auth.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
 import Chrome from "../components/Chrome.jsx";
@@ -25,23 +23,13 @@ const PREFS = [
 
 export default function Profile() {
   const bump = useStore();
-  const nav = useNavigate();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({});
   const [saved, setSaved] = useState(function () { return Store.profile(); });
-  const [acc, setAcc] = useState(null);
   const refs = { name: useRef(null), username: useRef(null), phone: useRef(null), bio: useRef(null) };
 
   const tint = TINTS.some(function (x) { return x.id === saved.tint; }) ? saved.tint : "accent";
   const prefs = Store.prefs();
-  const accounts = Auth.accounts();
-
-  /* the account card reports who the gate signed in - and, as it always did,
-     adopting that account is what writes the app profile. The head keeps the
-     profile as it was when this screen opened (the old page painted before the
-     account was adopted), so saved is captured once and only user actions move it. */
-  useEffect(function () { setAcc(Auth.current()); }, []);
-
   const view = editing ? draft : saved;
   const shown = {
     name: (editing ? String(draft.name || "").trim() : saved.name) || "\u2014",
@@ -105,11 +93,6 @@ export default function Profile() {
   const threads = Object.keys(Store.chats());
   const msgs = threads.reduce(function (n, id) { return n + Store.chats()[id].messages.length; }, 0);
   const unread = Store.unreadTotal();
-  const acctNote = acc
-    ? (accounts.length > 1
-      ? "Log out to switch to another of the " + accounts.length + " accounts on this device."
-      : "The only account on this device. Log out to sign in with another number.")
-    : "Sign in with the mobile number this account was created with.";
 
   return (
     <Chrome bar={<div className="titles"><b>Profile</b></div>}>
@@ -187,17 +170,6 @@ export default function Profile() {
               </div>
             );
           })}
-        </section>
-
-        <section className="card">
-          <div className="card-head">
-            <div>
-              <h2>Account</h2>
-              <p id="acctStat">{acc ? "Signed in as " + Auth.pretty(acc.mobile) : "Signed out"}</p>
-            </div>
-            <button className="btn ghost sm" type="button" id="signOutBtn" hidden={!acc} onClick={function () { Auth.signOut(); nav("/login"); }}>Log out</button>
-          </div>
-          <p className="hint" id="acctNote">{acctNote}</p>
         </section>
 
         <section className="card">

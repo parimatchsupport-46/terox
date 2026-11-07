@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Auth from "../lib/auth.js";
 import Store from "../lib/store.js";
 import logo from "../assets/logo.png";
 
@@ -10,7 +9,6 @@ export default function InviteNotice() {
   useEffect(function () {
     let index = 0;
     const timer = window.setInterval(function () {
-      if (!Auth.peek()) return;
       const roster = Store.users();
       if (!roster.length) return;
       const user = roster[index % roster.length];

@@ -1,4 +1,4 @@
-/* Track only payments actually submitted by this signed-in account on this device. */
+/* Track only payments actually submitted by this browser identity on this device. */
 function key(accountId, uid) {
   return "terox.verification.v1:" + encodeURIComponent(accountId) + ":" + encodeURIComponent(uid);
 }

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Chrome from "../components/Chrome.jsx";
 import Store from "../lib/store.js";
-import Auth from "../lib/auth.js";
+import { visitorId } from "../lib/visitor.js";
 import { beginVerification } from "../lib/verificationSession.js";
 import useStore from "../lib/useStore.js";
 import UI from "../lib/ui.js";
@@ -61,7 +61,7 @@ export default function Payment() {
       amount: session.amount, service: session.service, plan: session.plan,
       mode: session.mode, upiId: session.upi, status: "pending", at: Date.now()
     };
-    if (!beginVerification(Auth.sessionId(), uid, request.id)) {
+    if (!beginVerification(visitorId(), uid, request.id)) {
       UI.toast("Could not start verification. Please try again.", "bad");
       return;
     }

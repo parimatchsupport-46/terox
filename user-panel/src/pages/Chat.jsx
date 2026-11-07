@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Store from "../lib/store.js";
-import Auth from "../lib/auth.js";
+import { visitorId } from "../lib/visitor.js";
 import { readVerification, finishVerification } from "../lib/verificationSession.js";
 import UI from "../lib/ui.js";
 import useStore from "../lib/useStore.js";
@@ -49,8 +49,8 @@ export default function Chat() {
   const [sheetAria, setSheetAria] = useState(undefined);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState("verifying"); // "verifying" | "accepted" | "rejected"
-  const accountId = Auth.sessionId();
-  const [activeVerification, setActiveVerification] = useState(function () { return readVerification(accountId, uid); });
+  const browserId = visitorId();
+  const [activeVerification, setActiveVerification] = useState(function () { return readVerification(browserId, uid); });
   const handledVerification = useRef("");
 
   const thread = useRef(null);
@@ -149,13 +149,13 @@ export default function Chat() {
   }
   function closeVerify() {
     if (verifyStatus === "rejected" && activeVerification) {
-      finishVerification(accountId, uid, activeVerification);
+      finishVerification(browserId, uid, activeVerification);
       setActiveVerification(null);
     }
     setVerifyOpen(false);
   }
 
-  /* Only the current account's explicitly submitted request can open this dialog. */
+  /* Only this browser's explicitly submitted request can open this dialog. */
   useEffect(function () {
     if (!trackedRequest || !activeVerification) return;
     const state = activeVerification + ":" + trackedRequest.status;
@@ -170,11 +170,11 @@ export default function Chat() {
       UI.toast("Payment rejected — fir se try karo", "bad");
     } else if (trackedRequest.status === "accepted") {
       if (Store.acknowledgePayment(uid, activeVerification)) UI.toast("Payment verified", "ok");
-      finishVerification(accountId, uid, activeVerification);
+      finishVerification(browserId, uid, activeVerification);
       setActiveVerification(null);
       setVerifyOpen(false);
     }
-  }, [uid, accountId, activeVerification, trackedRequest && trackedRequest.id, trackedRequest && trackedRequest.status]);
+  }, [uid, browserId, activeVerification, trackedRequest && trackedRequest.id, trackedRequest && trackedRequest.status]);
 
   useEffect(function () {
     function key(e) { if (e.key === "Escape" && sheetOn) closeSheet(); }

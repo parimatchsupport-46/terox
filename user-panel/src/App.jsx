@@ -1,37 +1,18 @@
-/* ==========================================================================
-   App.jsx — five routes, one gate. Nothing here renders chrome: each screen
-   brings the markup it always had.
-   ========================================================================== */
+/* User-panel routes are available directly, without an account gate. */
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Auth from "./lib/auth.js";
 import useStore from "./lib/useStore.js";
 import Home from "./pages/Home.jsx";
 import Chat from "./pages/Chat.jsx";
 import Profile from "./pages/Profile.jsx";
 import User from "./pages/User.jsx";
 import Payment from "./pages/Payment.jsx";
-import Login from "./pages/Login.jsx";
 
-const APP_ROUTES = /^(\/(index|chat|profile|user|pay))?(\?|$)/;
-
-function nextFrom(search) {
-  let next = "";
-  try { next = new URLSearchParams(search).get("next") || ""; } catch (e) {}
-  return APP_ROUTES.test(next) ? next : "/";
-}
-
-function LoginRoute() {
-  const loc = useLocation();
-  if (Auth.peek()) return <Navigate to={nextFrom(loc.search)} replace />;
-  return <Login />;
-}
-
-function Guard({ children }) {
-  const loc = useLocation();
-  if (!Auth.peek()) {
-    return <Navigate to={"/login?next=" + encodeURIComponent(loc.pathname + (loc.search || ""))} replace />;
-  }
-  return children;
+// Preserve old shared/bookmarked login links, but never show a login screen.
+function LegacyLoginRedirect() {
+  const location = useLocation();
+  const next = new URLSearchParams(location.search).get("next") || "/";
+  const safe = /^\/(?:index|chat|profile|user|pay)(?:\?[^#]*)?$/.test(next) || next === "/";
+  return <Navigate to={safe ? next : "/"} replace />;
 }
 
 export default function App() {
@@ -39,12 +20,13 @@ export default function App() {
   const location = useLocation();
   return (
     <Routes location={location} key={location.pathname + location.search}>
-      <Route path="/login" element={<LoginRoute />} />
-      <Route path="/" element={<Guard><Home /></Guard>} />
-      <Route path="/chat" element={<Guard><Chat /></Guard>} />
-      <Route path="/profile" element={<Guard><Profile /></Guard>} />
-      <Route path="/user" element={<Guard><User /></Guard>} />
-      <Route path="/pay" element={<Guard><Payment /></Guard>} />
+      <Route path="/login" element={<LegacyLoginRedirect />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/index" element={<Home />} />
+      <Route path="/chat" element={<Chat />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/user" element={<User />} />
+      <Route path="/pay" element={<Payment />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
